@@ -1,0 +1,26 @@
+{
+  "name": "edubridge-monorepo",
+  "version": "1.0.0",
+  "description": "EduBridge Monorepo - Backend (NestJS) + Mobile (Flutter)",
+  "private": true,
+  "scripts": {
+    "backend:install": "cd backend && npm install",
+    "backend:dev": "cd backend && npm run start:dev",
+    "backend:build": "cd backend && npm run build",
+    "backend:test": "cd backend && npm run test",
+    "mobile:get": "cd mobile && flutter pub get",
+    "mobile:run": "cd mobile && flutter run",
+    "mobile:build:apk": "cd mobile && flutter build apk",
+    "mobile:build:ios": "cd mobile && flutter build ios",
+    "install:all": "npm run backend:install",
+    "test:all": "npm run backend:test"
+  },
+  "keywords": [
+    "edubridge",
+    "monorepo",
+    "nestjs",
+    "flutter"
+  ],
+  "author": "",
+  "license": "UNLICENSED"
+}
