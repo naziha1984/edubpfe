@@ -24,9 +24,7 @@ export class ProgressService {
     if (requesterKidId) {
       // Kid accessing their own progress
       if (kidId !== requesterKidId) {
-        throw new ForbiddenException(
-          'You can only view your own progress',
-        );
+        throw new ForbiddenException('You can only view your own progress');
       }
     } else if (requesterParentId) {
       // Parent accessing their kid's progress

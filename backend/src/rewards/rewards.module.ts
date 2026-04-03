@@ -5,7 +5,10 @@ import { RewardsService } from './rewards.service';
 import { BadgeService } from './badge.service';
 import { Reward, RewardSchema } from './schemas/reward.schema';
 import { Badge, BadgeSchema } from './schemas/badge.schema';
-import { RewardHistory, RewardHistorySchema } from './schemas/reward-history.schema';
+import {
+  RewardHistory,
+  RewardHistorySchema,
+} from './schemas/reward-history.schema';
 import { KidsModule } from '../kids/kids.module';
 
 @Module({

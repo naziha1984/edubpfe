@@ -1,6 +1,29 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
+/** Pièce jointe (fichiers hébergés sous /api/uploads/assignments/) */
+@Schema({ _id: false })
+export class AssignmentAttachment {
+  @Prop({ required: true })
+  originalName: string;
+
+  @Prop({ required: true })
+  storedName: string;
+
+  @Prop({ required: true })
+  mimeType: string;
+
+  @Prop({ required: true })
+  size: number;
+
+  /** Chemin relatif au dossier uploads (ex. assignments/abc.pdf) */
+  @Prop({ required: true })
+  urlPath: string;
+}
+
+export const AssignmentAttachmentSchema =
+  SchemaFactory.createForClass(AssignmentAttachment);
+
 export type AssignmentDocument = Assignment &
   Document & {
     createdAt: Date;
@@ -29,6 +52,9 @@ export class Assignment {
 
   @Prop({ default: true })
   isActive: boolean;
+
+  @Prop({ type: [AssignmentAttachmentSchema], default: [] })
+  attachments: AssignmentAttachment[];
 }
 
 export const AssignmentSchema = SchemaFactory.createForClass(Assignment);

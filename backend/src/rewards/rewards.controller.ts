@@ -44,9 +44,10 @@ export class RewardsController {
     return {
       streak: result.streak,
       xpEarned: result.xpEarned,
-      message: result.xpEarned > 0 
-        ? `Streak updated! Current streak: ${result.streak} days. Earned ${result.xpEarned} XP.`
-        : 'Already checked in today.',
+      message:
+        result.xpEarned > 0
+          ? `Streak updated! Current streak: ${result.streak} days. Earned ${result.xpEarned} XP.`
+          : 'Already checked in today.',
     };
   }
 }

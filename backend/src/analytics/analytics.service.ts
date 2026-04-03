@@ -6,8 +6,10 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Progress, ProgressDocument } from '../quiz/schemas/progress.schema';
-import { Class, ClassDocument } from '../classes/schemas/class.schema';
-import { ClassMembership, ClassMembershipDocument } from '../classes/schemas/class-membership.schema';
+import {
+  ClassMembership,
+  ClassMembershipDocument,
+} from '../classes/schemas/class-membership.schema';
 import { ClassesService } from '../classes/classes.service';
 
 export interface KidProgressStats {
@@ -44,9 +46,14 @@ export class AnalyticsService {
     };
   }> {
     // Verify class ownership
-    const isOwner = await this.classesService.checkOwnership(classId, teacherId);
+    const isOwner = await this.classesService.checkOwnership(
+      classId,
+      teacherId,
+    );
     if (!isOwner) {
-      throw new ForbiddenException('You can only view analytics for your own classes');
+      throw new ForbiddenException(
+        'You can only view analytics for your own classes',
+      );
     }
 
     // Verify class exists
@@ -79,7 +86,9 @@ export class AnalyticsService {
 
     const kidIds = memberships.map((m) => {
       const kidId = m.kidId._id || m.kidId;
-      return kidId instanceof Types.ObjectId ? kidId : new Types.ObjectId(kidId);
+      return kidId instanceof Types.ObjectId
+        ? kidId
+        : new Types.ObjectId(kidId);
     });
 
     // Use aggregation to get progress statistics for each kid
@@ -155,9 +164,7 @@ export class AnalyticsService {
     ]);
 
     // Create a map of kidId to stats for quick lookup
-    const statsMap = new Map(
-      progressStats.map((stat) => [stat.kidId, stat]),
-    );
+    const statsMap = new Map(progressStats.map((stat) => [stat.kidId, stat]));
 
     // Build result array including all kids (even those without progress)
     const kids: KidProgressStats[] = memberships.map((membership) => {

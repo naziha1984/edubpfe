@@ -3,8 +3,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AssignmentsController } from './assignments.controller';
 import { KidAssignmentsController } from './kid-assignments.controller';
 import { AssignmentsService } from './assignments.service';
-import { Assignment, AssignmentSchema } from '../notifications/schemas/assignment.schema';
-import { AssignmentSubmission, AssignmentSubmissionSchema } from './schemas/assignment-submission.schema';
+import {
+  Assignment,
+  AssignmentSchema,
+} from '../notifications/schemas/assignment.schema';
+import {
+  AssignmentSubmission,
+  AssignmentSubmissionSchema,
+} from './schemas/assignment-submission.schema';
 import { ClassesModule } from '../classes/classes.module';
 
 @Module({

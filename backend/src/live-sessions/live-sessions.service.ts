@@ -1,26 +1,35 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { LiveSession, LiveSessionDocument, LiveSessionStatus } from './schemas/live-session.schema';
+import {
+  LiveSession,
+  LiveSessionDocument,
+  LiveSessionStatus,
+} from './schemas/live-session.schema';
 import { CreateLiveSessionDto } from './dto/create-live-session.dto';
 import { ClassesService } from '../classes/classes.service';
 
 @Injectable()
 export class LiveSessionsService {
   constructor(
-    @InjectModel(LiveSession.name) private liveSessionModel: Model<LiveSessionDocument>,
+    @InjectModel(LiveSession.name)
+    private liveSessionModel: Model<LiveSessionDocument>,
     private classesService: ClassesService,
   ) {}
 
-  async createLiveSession(createLiveSessionDto: CreateLiveSessionDto, teacherId: string): Promise<LiveSessionDocument> {
+  async createLiveSession(
+    createLiveSessionDto: CreateLiveSessionDto,
+    teacherId: string,
+  ): Promise<LiveSessionDocument> {
     // Verify class ownership
-    const isOwner = await this.classesService.checkOwnership(createLiveSessionDto.classId, teacherId);
+    const isOwner = await this.classesService.checkOwnership(
+      createLiveSessionDto.classId,
+      teacherId,
+    );
     if (!isOwner) {
-      throw new ForbiddenException('You can only create live sessions for your own classes');
+      throw new ForbiddenException(
+        'You can only create live sessions for your own classes',
+      );
     }
 
     const liveSession = new this.liveSessionModel({
@@ -34,10 +43,18 @@ export class LiveSessionsService {
     return liveSession.save();
   }
 
-  async getLiveSessionsByClass(classId: string, teacherId: string): Promise<LiveSessionDocument[]> {
-    const isOwner = await this.classesService.checkOwnership(classId, teacherId);
+  async getLiveSessionsByClass(
+    classId: string,
+    teacherId: string,
+  ): Promise<LiveSessionDocument[]> {
+    const isOwner = await this.classesService.checkOwnership(
+      classId,
+      teacherId,
+    );
     if (!isOwner) {
-      throw new ForbiddenException('You can only view live sessions for your own classes');
+      throw new ForbiddenException(
+        'You can only view live sessions for your own classes',
+      );
     }
 
     return this.liveSessionModel

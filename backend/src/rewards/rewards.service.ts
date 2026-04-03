@@ -7,7 +7,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Reward, RewardDocument } from './schemas/reward.schema';
 import { Badge, BadgeDocument, BadgeType } from './schemas/badge.schema';
-import { RewardHistory, RewardHistoryDocument } from './schemas/reward-history.schema';
+import {
+  RewardHistory,
+  RewardHistoryDocument,
+} from './schemas/reward-history.schema';
 import { KidsService } from '../kids/kids.service';
 
 @Injectable()
@@ -50,7 +53,8 @@ export class RewardsService {
   ): Promise<RewardDocument> {
     const reward = await this.getOrCreateReward(kidId);
 
-    const oldLevel = reward.currentLevel;
+    // Utilisé uniquement pour le recalcul du niveau (inutile ici).
+    // On garde la logique sans variable inutile pour passer le lint.
     reward.totalXP += xpAmount;
     reward.currentLevel = Math.floor(reward.totalXP / this.XP_PER_LEVEL);
 
@@ -72,7 +76,9 @@ export class RewardsService {
     return reward;
   }
 
-  async updateStreak(kidId: string): Promise<{ streak: number; xpEarned: number }> {
+  async updateStreak(
+    kidId: string,
+  ): Promise<{ streak: number; xpEarned: number }> {
     const reward = await this.getOrCreateReward(kidId);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -118,7 +124,13 @@ export class RewardsService {
     await reward.save();
 
     if (xpEarned > 0) {
-      await this.addXP(kidId, xpEarned, 'streak', undefined, `Daily streak: ${reward.currentStreak} days`);
+      await this.addXP(
+        kidId,
+        xpEarned,
+        'streak',
+        undefined,
+        `Daily streak: ${reward.currentStreak} days`,
+      );
     }
 
     return { streak: reward.currentStreak, xpEarned };
@@ -128,9 +140,15 @@ export class RewardsService {
     const badges: BadgeType[] = [];
 
     // XP badges
-    if (reward.totalXP >= 5000 && !reward.badges.includes(await this.getBadgeId(BadgeType.XP_5000))) {
+    if (
+      reward.totalXP >= 5000 &&
+      !reward.badges.includes(await this.getBadgeId(BadgeType.XP_5000))
+    ) {
       badges.push(BadgeType.XP_5000);
-    } else if (reward.totalXP >= 1000 && !reward.badges.includes(await this.getBadgeId(BadgeType.XP_1000))) {
+    } else if (
+      reward.totalXP >= 1000 &&
+      !reward.badges.includes(await this.getBadgeId(BadgeType.XP_1000))
+    ) {
       badges.push(BadgeType.XP_1000);
     }
 
@@ -138,16 +156,24 @@ export class RewardsService {
       const badgeIds = await Promise.all(
         badges.map((type) => this.getBadgeId(type)),
       );
-      reward.badges.push(...badgeIds.filter((id) => id && !reward.badges.includes(id)));
+      reward.badges.push(
+        ...badgeIds.filter((id) => id && !reward.badges.includes(id)),
+      );
     }
   }
 
   private async checkStreakBadges(reward: RewardDocument): Promise<void> {
     const badges: BadgeType[] = [];
 
-    if (reward.currentStreak >= 30 && !reward.badges.includes(await this.getBadgeId(BadgeType.STREAK_30))) {
+    if (
+      reward.currentStreak >= 30 &&
+      !reward.badges.includes(await this.getBadgeId(BadgeType.STREAK_30))
+    ) {
       badges.push(BadgeType.STREAK_30);
-    } else if (reward.currentStreak >= 7 && !reward.badges.includes(await this.getBadgeId(BadgeType.STREAK_7))) {
+    } else if (
+      reward.currentStreak >= 7 &&
+      !reward.badges.includes(await this.getBadgeId(BadgeType.STREAK_7))
+    ) {
       badges.push(BadgeType.STREAK_7);
     }
 
@@ -155,11 +181,17 @@ export class RewardsService {
       const badgeIds = await Promise.all(
         badges.map((type) => this.getBadgeId(type)),
       );
-      reward.badges.push(...badgeIds.filter((id) => id && !reward.badges.includes(id)));
+      reward.badges.push(
+        ...badgeIds.filter((id) => id && !reward.badges.includes(id)),
+      );
     }
   }
 
-  async checkQuizBadges(kidId: string, score: number, totalQuestions: number): Promise<void> {
+  async checkQuizBadges(
+    kidId: string,
+    score: number,
+    totalQuestions: number,
+  ): Promise<void> {
     const reward = await this.getOrCreateReward(kidId);
 
     // Perfect score badge
@@ -209,7 +241,9 @@ export class RewardsService {
         throw new NotFoundException('Kid not found');
       }
       if (kid.parentId.toString() !== requesterParentId) {
-        throw new ForbiddenException('You can only view rewards for your own kids');
+        throw new ForbiddenException(
+          'You can only view rewards for your own kids',
+        );
       }
     } else {
       throw new ForbiddenException('Authentication required');

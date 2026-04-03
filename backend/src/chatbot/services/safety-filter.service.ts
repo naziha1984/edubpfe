@@ -5,30 +5,78 @@ export class SafetyFilterService {
   // 不安全的词汇列表（示例，实际应该更全面）
   private readonly unsafeWords = [
     // 英语
-    'violence', 'weapon', 'gun', 'knife', 'kill', 'hurt', 'attack',
-    'drug', 'alcohol', 'cigarette', 'smoke', 'drunk',
-    'sex', 'sexual', 'nude', 'naked', 'porn',
-    'hate', 'racist', 'discrimination',
+    'violence',
+    'weapon',
+    'gun',
+    'knife',
+    'kill',
+    'hurt',
+    'attack',
+    'drug',
+    'alcohol',
+    'cigarette',
+    'smoke',
+    'drunk',
+    'sex',
+    'sexual',
+    'nude',
+    'naked',
+    'porn',
+    'hate',
+    'racist',
+    'discrimination',
     // 法语
-    'violence', 'arme', 'tuer', 'blesser', 'attaquer',
-    'drogue', 'alcool', 'cigarette', 'fumer', 'ivre',
-    'sexe', 'sexuel', 'nu', 'porno',
-    'haine', 'raciste', 'discrimination',
+    'violence',
+    'arme',
+    'tuer',
+    'blesser',
+    'attaquer',
+    'drogue',
+    'alcool',
+    'cigarette',
+    'fumer',
+    'ivre',
+    'sexe',
+    'sexuel',
+    'nu',
+    'porno',
+    'haine',
+    'raciste',
+    'discrimination',
     // 阿拉伯语（音译）
-    'عنف', 'سلاح', 'قتل', 'إيذاء', 'هجوم',
-    'مخدرات', 'كحول', 'سجائر', 'تدخين', 'سكران',
-    'جنس', 'جنسي', 'عري', 'إباحية',
-    'كراهية', 'عنصري', 'تمييز',
+    'عنف',
+    'سلاح',
+    'قتل',
+    'إيذاء',
+    'هجوم',
+    'مخدرات',
+    'كحول',
+    'سجائر',
+    'تدخين',
+    'سكران',
+    'جنس',
+    'جنسي',
+    'عري',
+    'إباحية',
+    'كراهية',
+    'عنصري',
+    'تمييز',
   ];
 
   // 检查消息是否安全
-  checkSafety(message: string, language: 'ar' | 'fr' | 'en'): {
+  checkSafety(
+    message: string,
+    _language: 'ar' | 'fr' | 'en',
+  ): {
     isSafe: boolean;
     reason?: string;
   } {
     if (!message || message.trim().length === 0) {
       return { isSafe: true };
     }
+
+    // Paramètre non utilisé pour l'instant (on garde la signature pour compatibilité).
+    void _language;
 
     const lowerMessage = message.toLowerCase().trim();
 
@@ -84,7 +132,7 @@ export class SafetyFilterService {
     const responses = {
       en: "I'm sorry, but I can't respond to that. Let's talk about something else!",
       fr: "Je suis désolé, mais je ne peux pas répondre à cela. Parlons d'autre chose !",
-      ar: "أنا آسف، لكن لا يمكنني الرد على ذلك. دعنا نتحدث عن شيء آخر!",
+      ar: 'أنا آسف، لكن لا يمكنني الرد على ذلك. دعنا نتحدث عن شيء آخر!',
     };
     return responses[language];
   }

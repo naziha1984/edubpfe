@@ -7,7 +7,10 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Class, ClassDocument } from './schemas/class.schema';
-import { ClassMembership, ClassMembershipDocument } from './schemas/class-membership.schema';
+import {
+  ClassMembership,
+  ClassMembershipDocument,
+} from './schemas/class-membership.schema';
 import { CreateClassDto } from './dto/create-class.dto';
 import { JoinClassDto } from './dto/join-class.dto';
 
@@ -29,7 +32,10 @@ export class ClassesService {
     return code;
   }
 
-  async createClass(createClassDto: CreateClassDto, teacherId: string): Promise<ClassDocument> {
+  async createClass(
+    createClassDto: CreateClassDto,
+    teacherId: string,
+  ): Promise<ClassDocument> {
     let classCode: string;
     let isUnique = false;
     let attempts = 0;
@@ -81,7 +87,9 @@ export class ClassesService {
     return classDoc.teacherId.toString() === teacherId;
   }
 
-  async joinClass(joinClassDto: JoinClassDto, parentId: string): Promise<ClassMembershipDocument> {
+  async joinClass(
+    joinClassDto: JoinClassDto,
+  ): Promise<ClassMembershipDocument> {
     // Find class by code
     const classDoc = await this.findByClassCode(joinClassDto.classCode);
     if (!classDoc) {
@@ -119,11 +127,16 @@ export class ClassesService {
     return membership.save();
   }
 
-  async getClassMembers(classId: string, teacherId: string): Promise<ClassMembershipDocument[]> {
+  async getClassMembers(
+    classId: string,
+    teacherId: string,
+  ): Promise<ClassMembershipDocument[]> {
     // Verify ownership
     const isOwner = await this.checkOwnership(classId, teacherId);
     if (!isOwner) {
-      throw new ForbiddenException('You can only view members of your own classes');
+      throw new ForbiddenException(
+        'You can only view members of your own classes',
+      );
     }
 
     return this.classMembershipModel
@@ -151,7 +164,9 @@ export class ClassesService {
     // Verify ownership
     const isOwner = await this.checkOwnership(classId, teacherId);
     if (!isOwner) {
-      throw new ForbiddenException('You can only manage students in your own classes');
+      throw new ForbiddenException(
+        'You can only manage students in your own classes',
+      );
     }
 
     // Check if kid is already a member
@@ -164,7 +179,9 @@ export class ClassesService {
 
     if (existingMembership) {
       if (existingMembership.isActive) {
-        throw new ConflictException('Student is already a member of this class');
+        throw new ConflictException(
+          'Student is already a member of this class',
+        );
       } else {
         // Reactivate membership
         existingMembership.isActive = true;
@@ -190,7 +207,9 @@ export class ClassesService {
     // Verify ownership
     const isOwner = await this.checkOwnership(classId, teacherId);
     if (!isOwner) {
-      throw new ForbiddenException('You can only manage students in your own classes');
+      throw new ForbiddenException(
+        'You can only manage students in your own classes',
+      );
     }
 
     const membership = await this.classMembershipModel

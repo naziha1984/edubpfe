@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Post,
-  Put,
   Delete,
   Param,
   Body,
@@ -29,7 +28,10 @@ export class ClassesController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async createClass(@Body() createClassDto: CreateClassDto, @GetUser() user: any) {
+  async createClass(
+    @Body() createClassDto: CreateClassDto,
+    @GetUser() user: any,
+  ) {
     const newClass = await this.classesService.createClass(
       createClassDto,
       user.id,

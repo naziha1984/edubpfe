@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'ui/theme/edubridge_theme.dart';
-import 'ui/transitions/page_transitions.dart';
-import 'pages/welcome_page_v2.dart';
 import 'providers/auth_provider.dart';
 import 'providers/kids_provider.dart';
 import 'providers/quiz_provider.dart';
@@ -16,6 +14,7 @@ import 'providers/live_sessions_provider.dart';
 import 'services/api_service.dart';
 import 'utils/app_router.dart';
 import 'components/loading.dart';
+import 'components/chatbot_floating_button.dart';
 
 void main() {
   runApp(const EduBridgeApp());
@@ -30,6 +29,7 @@ class EduBridgeApp extends StatelessWidget {
     final apiService = ApiService();
     return MultiProvider(
       providers: [
+        Provider<ApiService>.value(value: apiService),
         ChangeNotifierProvider(create: (_) => AuthProvider(apiService)),
         ChangeNotifierProvider(create: (_) => KidsProvider(apiService)),
         ChangeNotifierProvider(create: (_) => QuizProvider(apiService)),
@@ -73,7 +73,13 @@ class EduBridgeApp extends StatelessWidget {
         },
         // Utiliser les transitions par défaut pour toutes les navigations
         builder: (context, child) {
-          return child ?? const SizedBox.shrink();
+          final c = child ?? const SizedBox.shrink();
+          return Stack(
+            children: [
+              c,
+              const ChatbotFloatingButton(),
+            ],
+          );
         },
       ),
     );

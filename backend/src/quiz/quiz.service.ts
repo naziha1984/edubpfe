@@ -6,9 +6,15 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { QuizSession, QuizSessionDocument } from './schemas/quiz-session.schema';
+import {
+  QuizSession,
+  QuizSessionDocument,
+} from './schemas/quiz-session.schema';
 import { Progress, ProgressDocument } from './schemas/progress.schema';
-import { QuizQuestion, QuizQuestionDocument } from './schemas/quiz-question.schema';
+import {
+  QuizQuestion,
+  QuizQuestionDocument,
+} from './schemas/quiz-question.schema';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { SubmitQuizDto } from './dto/submit-quiz.dto';
 import { LessonsService } from '../subjects/lessons.service';
@@ -29,7 +35,10 @@ export class QuizService {
     private rewardsService: RewardsService,
   ) {}
 
-  async createSession(createSessionDto: CreateSessionDto, kidIdFromToken: string) {
+  async createSession(
+    createSessionDto: CreateSessionDto,
+    kidIdFromToken: string,
+  ) {
     // Strict IDOR check: kidId from token must match kidId from request
     if (createSessionDto.kidId !== kidIdFromToken) {
       throw new ForbiddenException('You can only create sessions for yourself');
@@ -50,7 +59,7 @@ export class QuizService {
     }
 
     // Create or update progress
-    const progress = await this.progressModel.findOneAndUpdate(
+    await this.progressModel.findOneAndUpdate(
       {
         kidId: new Types.ObjectId(kidIdFromToken),
         lessonId: new Types.ObjectId(createSessionDto.lessonId),
@@ -167,7 +176,11 @@ export class QuizService {
     );
 
     // Check for quiz-related badges
-    await this.rewardsService.checkQuizBadges(kidIdFromToken, score, totalQuestions);
+    await this.rewardsService.checkQuizBadges(
+      kidIdFromToken,
+      score,
+      totalQuestions,
+    );
 
     return {
       score,

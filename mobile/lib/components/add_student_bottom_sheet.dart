@@ -4,9 +4,8 @@ import '../ui/theme/edubridge_typography.dart';
 import '../ui/theme/edubridge_theme.dart';
 import '../ui/components/gradient_button.dart';
 
-/// BottomSheet pour ajouter un élève à une classe
-/// Note: Pour l'instant, on demande le kidId directement
-/// TODO: Implémenter une recherche/autocomplete des kids disponibles
+/// Bottom sheet : l’enseignant ajoute un élève avec son identifiant enfant.
+/// Le parent peut aussi faire rejoindre l’enfant avec le code de classe (app parent).
 class AddStudentBottomSheet extends StatefulWidget {
   const AddStudentBottomSheet({super.key});
 
@@ -67,7 +66,7 @@ class _AddStudentBottomSheetState extends State<AddStudentBottomSheet> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Add Student',
+                      'Ajouter un élève',
                       style: EduBridgeTypography.headlineSmall.copyWith(
                         color: EduBridgeColors.textPrimary,
                         fontWeight: FontWeight.bold,
@@ -97,14 +96,14 @@ class _AddStudentBottomSheetState extends State<AddStudentBottomSheet> {
                       TextFormField(
                         controller: _kidIdController,
                         decoration: const InputDecoration(
-                          labelText: 'Student ID *',
-                          hintText: 'Enter student ID',
-                          prefixIcon: Icon(Icons.person),
+                          labelText: 'Identifiant élève *',
+                          hintText: 'Collez l’ID communiqué par le parent',
+                          prefixIcon: Icon(Icons.badge_outlined),
                           floatingLabelBehavior: FloatingLabelBehavior.auto,
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Student ID is required';
+                            return 'L’identifiant est obligatoire';
                           }
                           return null;
                         },
@@ -129,7 +128,7 @@ class _AddStudentBottomSheetState extends State<AddStudentBottomSheet> {
                             const SizedBox(width: EduBridgeTheme.spacingSM),
                             Expanded(
                               child: Text(
-                                'Students can also join using the class code',
+                                'Astuce : le parent peut aussi faire rejoindre l’enfant depuis son appli avec le code de la classe. L’ID s’affiche sur la fiche enfant côté parent (copier/coller).',
                                 style: EduBridgeTypography.bodySmall.copyWith(
                                   color: EduBridgeColors.info,
                                 ),
@@ -141,7 +140,7 @@ class _AddStudentBottomSheetState extends State<AddStudentBottomSheet> {
                       const SizedBox(height: EduBridgeTheme.spacingXL),
                       // Submit button
                       GradientButton(
-                        text: 'Add Student',
+                        text: 'Ajouter à la classe',
                         icon: Icons.person_add,
                         onPressed: _isLoading ? null : _handleSubmit,
                         isLoading: _isLoading,

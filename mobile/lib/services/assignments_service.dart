@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:file_picker/file_picker.dart';
 import 'api_service.dart';
 
 /// Service pour les endpoints assignments (teacher et kid)
@@ -61,16 +62,52 @@ class AssignmentsService {
 
   // ========== TEACHER ENDPOINTS ==========
 
-  /// POST /teacher/assignments - Crée un nouveau devoir
+  /// POST /teacher/assignments — multipart (champs + fichiers optionnels : PDF, images, vidéos, etc.)
   Future<Map<String, dynamic>> createAssignment(
-    Map<String, dynamic> data,
-  ) async {
-    final response = await http.post(
-      Uri.parse('${ApiService.baseUrl}/teacher/assignments'),
-      headers: _getHeaders(),
-      body: json.encode(data),
-    );
+    Map<String, dynamic> data, {
+    List<PlatformFile> files = const [],
+  }) async {
+    final uri = Uri.parse('${ApiService.baseUrl}/teacher/assignments');
+    final request = http.MultipartRequest('POST', uri);
+    final token = _apiService.token;
+    if (token != null) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
 
+    request.fields['classId'] = data['classId'] as String;
+    request.fields['title'] = data['title'] as String;
+    request.fields['dueDate'] = data['dueDate'] as String;
+    if (data['description'] != null &&
+        (data['description'] as String).trim().isNotEmpty) {
+      request.fields['description'] = data['description'] as String;
+    }
+    if (data['lessonId'] != null &&
+        (data['lessonId'] as String).trim().isNotEmpty) {
+      request.fields['lessonId'] = data['lessonId'] as String;
+    }
+
+    for (final f in files) {
+      if (f.bytes != null) {
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'files',
+            f.bytes!,
+            filename: f.name.isNotEmpty ? f.name : 'fichier',
+          ),
+        );
+      } else if (f.path != null && f.path!.isNotEmpty) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'files',
+            f.path!,
+            filename: f.name.isNotEmpty ? f.name : f.path!.split('/').last,
+          ),
+        );
+      }
+    }
+
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
     return await _handleResponse(response) as Map<String, dynamic>;
   }
 

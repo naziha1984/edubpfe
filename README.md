@@ -120,6 +120,56 @@ flutter build web
    flutter doctor
    ```
 
+## 🐳 Docker (backend + MongoDB)
+
+### Pré-requis
+- Docker Desktop installé
+- MongoDB sera lancé via `docker-compose`
+
+### Lancer
+```bash
+docker compose up --build
+```
+
+### Arrêter
+```bash
+docker compose down -v
+```
+
+### URL
+- API backend : `http://localhost:3000`
+
+## 🚀 Déploiement PFE (production)
+
+### 1) Préparer l'image Docker Hub
+```bash
+cd backend
+docker login
+docker build -t nazihadev/edubridge:latest .
+docker push nazihadev/edubridge:latest
+```
+
+### 2) Préparer les variables production
+```bash
+cp .env.prod.example .env.prod
+```
+
+Renseigner dans `.env.prod` :
+- `DOCKERHUB_IMAGE`
+- `MONGODB_URI` (MongoDB Atlas recommandé)
+- `JWT_SECRET`
+- `PORT`
+
+### 3) Déployer
+```powershell
+.\deploy-prod.ps1
+```
+
+### 4) Vérifier
+- `http://localhost:3000/api/health`
+- `docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f`
+
+
 2. **安装依赖**
    ```bash
    cd mobile

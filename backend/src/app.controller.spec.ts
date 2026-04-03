@@ -16,7 +16,9 @@ describe('AppController', () => {
 
   describe('root', () => {
     it('should return "Hello from EduBridge Backend API!"', () => {
-      expect(appController.getHello()).toBe('Hello from EduBridge Backend API!');
+      expect(appController.getHello()).toBe(
+        'Hello from EduBridge Backend API!',
+      );
     });
   });
 });

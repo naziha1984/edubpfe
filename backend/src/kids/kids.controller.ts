@@ -21,8 +21,6 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { GetUser } from '../auth/decorators/get-user.decorator';
-import { KidAuthGuard } from './guards/kid-auth.guard';
-import { GetKid } from './decorators/get-kid.decorator';
 import { UserRole } from '../users/schemas/user.schema';
 
 @Controller('kids')

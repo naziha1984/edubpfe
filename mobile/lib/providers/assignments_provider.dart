@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:file_picker/file_picker.dart';
 import '../models/assignment_model.dart';
 import '../services/api_service.dart';
 import '../services/assignments_service.dart';
@@ -61,13 +62,19 @@ class AssignmentsProvider with ChangeNotifier {
     }
   }
 
-  /// Crée un nouvel assignment (teacher)
-  Future<bool> createAssignment(Map<String, dynamic> data) async {
+  /// Crée un nouvel assignment (teacher), avec pièces jointes optionnelles.
+  Future<bool> createAssignment(
+    Map<String, dynamic> data, {
+    List<PlatformFile> files = const [],
+  }) async {
     _assignmentsError = null;
     notifyListeners();
 
     try {
-      final result = await _assignmentsService.createAssignment(data);
+      final result = await _assignmentsService.createAssignment(
+        data,
+        files: files,
+      );
       final newAssignment = AssignmentModel.fromJson(result);
       _assignments.add(newAssignment);
       _assignments.sort((a, b) => a.dueDate.compareTo(b.dueDate));

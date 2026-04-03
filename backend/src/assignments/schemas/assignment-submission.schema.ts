@@ -41,4 +41,7 @@ export const AssignmentSubmissionSchema =
   SchemaFactory.createForClass(AssignmentSubmission);
 
 // 确保每个 kid 对每个 assignment 只有一个 soumission
-AssignmentSubmissionSchema.index({ assignmentId: 1, kidId: 1 }, { unique: true });
+AssignmentSubmissionSchema.index(
+  { assignmentId: 1, kidId: 1 },
+  { unique: true },
+);

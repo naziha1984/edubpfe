@@ -8,7 +8,11 @@ export class ProgressAuthGuard extends AuthGuard(['jwt', 'kid-jwt']) {
     return super.canActivate(context);
   }
 
-  handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
+  handleRequest(err: any, user: any, _info: any, _context: ExecutionContext) {
+    // Paramètres non utilisés, conservés pour respecter la signature Passport.
+    void _info;
+    void _context;
+
     // Return user if either strategy succeeded
     if (user) {
       return user;

@@ -53,11 +53,11 @@ export class NotificationsController {
   }
 
   @Patch(':id/read')
-  async markAsRead(
-    @Param('id') id: string,
-    @GetUser() user: any,
-  ) {
-    const notification = await this.notificationsService.markAsRead(id, user.id);
+  async markAsRead(@Param('id') id: string, @GetUser() user: any) {
+    const notification = await this.notificationsService.markAsRead(
+      id,
+      user.id,
+    );
     return {
       id: notification._id.toString(),
       status: notification.status,

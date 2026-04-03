@@ -4,10 +4,12 @@ import '../components/loading.dart';
 import '../providers/auth_provider.dart';
 import '../utils/error_handler.dart';
 import '../ui/transitions/page_transitions.dart';
+import '../ui/theme/edubridge_colors.dart';
+import '../ui/theme/edubridge_typography.dart';
 import '../components/toast.dart';
 import 'login_page_v2.dart';
 
-/// Page d'inscription style moderne : header coloré + formulaire blanc
+/// Page d'inscription — design ludique et moderne, adapté aux familles et aux enfants.
 class RegisterPageV2 extends StatefulWidget {
   const RegisterPageV2({super.key});
 
@@ -15,7 +17,8 @@ class RegisterPageV2 extends StatefulWidget {
   State<RegisterPageV2> createState() => _RegisterPageV2State();
 }
 
-class _RegisterPageV2State extends State<RegisterPageV2> {
+class _RegisterPageV2State extends State<RegisterPageV2>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -25,11 +28,29 @@ class _RegisterPageV2State extends State<RegisterPageV2> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  /// Rôle à l'inscription : PARENT ou TEACHER
   String _selectedRole = 'PARENT';
+
+  // Couleurs « arc-en-ciel doux » — complètent le design system
+  static const Color _sunshine = Color(0xFFFFD166);
+  static const Color _bubbleMint = Color(0xFF95E8D7);
+  static const Color _bubblePink = Color(0xFFFFB4C8);
+  static const Color _skyTint = Color(0xFFE8F4FF);
+  static const Color _creamCard = Color(0xFFFFFDF8);
+
+  late AnimationController _bobbleController;
+
+  @override
+  void initState() {
+    super.initState();
+    _bobbleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2800),
+    )..repeat(reverse: true);
+  }
 
   @override
   void dispose() {
+    _bobbleController.dispose();
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
@@ -81,81 +102,159 @@ class _RegisterPageV2State extends State<RegisterPageV2> {
     return InputDecoration(
       labelText: labelText,
       hintText: hintText,
+      labelStyle: EduBridgeTypography.bodyMedium.copyWith(
+        color: EduBridgeColors.textSecondary,
+        fontWeight: FontWeight.w600,
+      ),
+      hintStyle: EduBridgeTypography.bodyMedium.copyWith(
+        color: EduBridgeColors.textTertiary,
+      ),
       prefixIcon: Icon(
         prefixIcon,
-        color: const Color(0xFF9E9E9E),
+        color: EduBridgeColors.secondary,
+        size: 22,
       ),
       filled: true,
-      fillColor: const Color(0xFFFAFAFA),
+      fillColor: _skyTint,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFFE0E0E0),
-          width: 1,
+        borderRadius: BorderRadius.circular(20),
+        borderSide: BorderSide(
+          color: EduBridgeColors.secondary.withOpacity(0.2),
+          width: 1.5,
         ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         borderSide: const BorderSide(
-          color: Color(0xFF7C4DFF),
+          color: EduBridgeColors.secondary,
           width: 2,
         ),
       ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20),
+        borderSide: BorderSide(
+          color: EduBridgeColors.error.withOpacity(0.8),
+        ),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20),
+        borderSide: const BorderSide(color: EduBridgeColors.error, width: 2),
+      ),
       floatingLabelBehavior: FloatingLabelBehavior.auto,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
     );
   }
 
-  Widget _buildRoleChip({
+  Widget _buildRoleCard({
     required String label,
+    required String subtitle,
     required IconData icon,
     required String role,
+    required Color accent,
   }) {
     final isSelected = _selectedRole == role;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => setState(() => _selectedRole = role),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? const Color(0xFF7C4DFF).withOpacity(0.12)
-                : const Color(0xFFFAFAFA),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected
-                  ? const Color(0xFF7C4DFF)
-                  : const Color(0xFFE0E0E0),
-              width: isSelected ? 2 : 1,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      transform: Matrix4.diagonal3Values(
+        isSelected ? 1.02 : 1.0,
+        isSelected ? 1.02 : 1.0,
+        1,
+      ),
+      transformAlignment: Alignment.center,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => setState(() => _selectedRole = role),
+          borderRadius: BorderRadius.circular(22),
+          child: Ink(
+            decoration: BoxDecoration(
+              gradient: isSelected
+                  ? LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        accent.withOpacity(0.35),
+                        EduBridgeColors.primaryContainer,
+                      ],
+                    )
+                  : null,
+              color: isSelected ? null : EduBridgeColors.surfaceVariant,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: isSelected ? accent : EduBridgeColors.surfaceDim,
+                width: isSelected ? 3 : 1.5,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: accent.withOpacity(0.35),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : null,
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.85),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 28,
+                    color: isSelected ? accent : EduBridgeColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: EduBridgeTypography.titleSmall.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: isSelected
+                        ? EduBridgeColors.textPrimary
+                        : EduBridgeColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  textAlign: TextAlign.center,
+                  style: EduBridgeTypography.labelSmall.copyWith(
+                    color: EduBridgeColors.textTertiary,
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 22,
-                color: isSelected
-                    ? const Color(0xFF7C4DFF)
-                    : Colors.grey[600],
-              ),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected
-                      ? const Color(0xFF7C4DFF)
-                      : Colors.grey[700],
-                ),
-              ),
-            ],
+        ),
+      ),
+    );
+  }
+
+  Widget _decorativeBlob({
+    required double size,
+    required Color color,
+    required Alignment alignment,
+  }) {
+    return Align(
+      alignment: alignment,
+      child: IgnorePointer(
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: color,
           ),
         ),
       ),
@@ -164,111 +263,147 @@ class _RegisterPageV2State extends State<RegisterPageV2> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Loading(message: 'Création du compte...'),
+      );
+    }
+
+    final topInset = MediaQuery.paddingOf(context).top;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: _isLoading
-          ? const Loading(message: 'Création du compte...')
-          : SafeArea(
-              child: Column(
-                children: [
-                  // Header coloré
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.only(
-                      top: MediaQuery.of(context).padding.top + 8,
-                      left: 16,
-                      right: 16,
-                      bottom: 32,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFFB8E8FF),
+                    EduBridgeColors.accentContainer.withOpacity(0.9),
+                    EduBridgeColors.secondaryContainer.withOpacity(0.85),
+                    const Color(0xFFFFF0F5),
+                  ],
+                  stops: const [0.0, 0.35, 0.65, 1.0],
+                ),
+              ),
+            ),
+          ),
+          _decorativeBlob(
+            size: 140,
+            color: Colors.white.withOpacity(0.35),
+            alignment: const Alignment(-1.15, -0.55),
+          ),
+          _decorativeBlob(
+            size: 100,
+            color: _sunshine.withOpacity(0.45),
+            alignment: const Alignment(1.2, -0.2),
+          ),
+          _decorativeBlob(
+            size: 90,
+            color: _bubbleMint.withOpacity(0.4),
+            alignment: const Alignment(1.1, 0.85),
+          ),
+          _decorativeBlob(
+            size: 76,
+            color: _bubblePink.withOpacity(0.35),
+            alignment: const Alignment(-0.95, 0.75),
+          ),
+          AnimatedBuilder(
+            animation: _bobbleController,
+            builder: (context, child) {
+              final t = _bobbleController.value;
+              return Positioned(
+                top: topInset + 52 + (t * 6),
+                right: 28,
+                child: IgnorePointer(
+                  child: Transform.rotate(
+                    angle: -0.08 + (t * 0.04),
+                    child: Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 36,
+                      color: _sunshine.withOpacity(0.85),
                     ),
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFF7C4DFF),
-                          Color(0xFFB388FF),
-                        ],
+                  ),
+                ),
+              );
+            },
+          ),
+          SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
+                  child: Row(
+                    children: [
+                      IconButton.filledTonal(
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white.withOpacity(0.92),
+                          foregroundColor: EduBridgeColors.secondaryDark,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.arrow_back_rounded, size: 22),
                       ),
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(28),
-                        bottomRight: Radius.circular(28),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.arrow_back_ios_new,
-                                  color: Colors.white, size: 22),
-                              onPressed: () => Navigator.pop(context),
+                      const Spacer(),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 4, 24, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'On crée ton compte',
+                        style: EduBridgeTypography.headlineMedium.copyWith(
+                          color: EduBridgeColors.textPrimary,
+                          height: 1.15,
+                          shadows: [
+                            Shadow(
+                              color: Colors.white.withOpacity(0.9),
+                              blurRadius: 12,
                             ),
-                            const Spacer(),
-                            Container(
-                              width: 44,
-                              height: 44,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black26,
-                                    blurRadius: 8,
-                                    offset: Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.school_rounded,
-                                color: Color(0xFF7C4DFF),
-                                size: 26,
-                              ),
-                            ),
-                            const Spacer(),
-                            const SizedBox(width: 48),
                           ],
                         ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Create Account',
-                          style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: 0.5,
-                          ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Rejoins EduBridge pour apprendre en s\'amusant',
+                        style: EduBridgeTypography.bodyLarge.copyWith(
+                          color: EduBridgeColors.textSecondary,
+                          fontWeight: FontWeight.w600,
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Rejoignez EduBridge',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white.withOpacity(0.9),
-                          ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      color: _creamCard,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(36),
+                        topRight: Radius.circular(36),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0x1A5B21B6),
+                          blurRadius: 24,
+                          offset: Offset(0, -8),
                         ),
                       ],
                     ),
-                  ),
-                  // Formulaire blanc
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(28),
-                            topRight: Radius.circular(28),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
-                              blurRadius: 20,
-                              offset: const Offset(0, -4),
-                            ),
-                          ],
-                        ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(36),
+                        topRight: Radius.circular(36),
+                      ),
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(22, 28, 22, 32),
                         child: Form(
                           key: _formKey,
                           child: Column(
@@ -279,13 +414,15 @@ class _RegisterPageV2State extends State<RegisterPageV2> {
                                   Expanded(
                                     child: TextFormField(
                                       controller: _firstNameController,
+                                      textInputAction: TextInputAction.next,
+                                      style: EduBridgeTypography.bodyLarge,
                                       decoration: _inputDecoration(
                                         labelText: 'Prénom',
-                                        prefixIcon: Icons.person_outline_rounded,
+                                        prefixIcon: Icons.sentiment_satisfied_alt_rounded,
                                       ),
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
-                                          return 'Requis';
+                                          return 'C\'est obligatoire';
                                         }
                                         return null;
                                       },
@@ -295,13 +432,15 @@ class _RegisterPageV2State extends State<RegisterPageV2> {
                                   Expanded(
                                     child: TextFormField(
                                       controller: _lastNameController,
+                                      textInputAction: TextInputAction.next,
+                                      style: EduBridgeTypography.bodyLarge,
                                       decoration: _inputDecoration(
                                         labelText: 'Nom',
-                                        prefixIcon: Icons.person_outline_rounded,
+                                        prefixIcon: Icons.badge_outlined,
                                       ),
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
-                                          return 'Requis';
+                                          return 'C\'est obligatoire';
                                         }
                                         return null;
                                       },
@@ -309,48 +448,53 @@ class _RegisterPageV2State extends State<RegisterPageV2> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 20),
-                              // Choix du rôle : Parent ou Enseignant
+                              const SizedBox(height: 22),
                               Text(
-                                'Je m\'inscris en tant que',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[700],
-                                  fontWeight: FontWeight.w500,
+                                'Tu t\'inscris comme',
+                                style: EduBridgeTypography.titleSmall.copyWith(
+                                  color: EduBridgeColors.textPrimary,
+                                  fontWeight: FontWeight.w800,
                                 ),
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 12),
                               Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Expanded(
-                                    child: _buildRoleChip(
+                                    child: _buildRoleCard(
                                       label: 'Parent',
+                                      subtitle: 'Accompagner l\'enfant',
                                       icon: Icons.family_restroom_rounded,
                                       role: 'PARENT',
+                                      accent: EduBridgeColors.secondary,
                                     ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
-                                    child: _buildRoleChip(
+                                    child: _buildRoleCard(
                                       label: 'Enseignant',
+                                      subtitle: 'Encadrer les élèves',
                                       icon: Icons.school_rounded,
                                       role: 'TEACHER',
+                                      accent: EduBridgeColors.accentDark,
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 22),
                               TextFormField(
                                 controller: _emailController,
                                 keyboardType: TextInputType.emailAddress,
+                                textInputAction: TextInputAction.next,
+                                style: EduBridgeTypography.bodyLarge,
                                 decoration: _inputDecoration(
                                   labelText: 'Email',
-                                  hintText: 'votre@email.com',
-                                  prefixIcon: Icons.email_outlined,
+                                  hintText: 'toi@exemple.fr',
+                                  prefixIcon: Icons.mark_email_unread_rounded,
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Entrez votre email';
+                                    return 'Entre ton email';
                                   }
                                   if (!value.contains('@')) {
                                     return 'Email invalide';
@@ -362,17 +506,19 @@ class _RegisterPageV2State extends State<RegisterPageV2> {
                               TextFormField(
                                 controller: _passwordController,
                                 obscureText: _obscurePassword,
+                                textInputAction: TextInputAction.next,
+                                style: EduBridgeTypography.bodyLarge,
                                 decoration: _inputDecoration(
                                   labelText: 'Mot de passe',
                                   hintText: '••••••••',
-                                  prefixIcon: Icons.lock_outline_rounded,
+                                  prefixIcon: Icons.lock_rounded,
                                 ).copyWith(
                                   suffixIcon: IconButton(
                                     icon: Icon(
                                       _obscurePassword
-                                          ? Icons.visibility_outlined
-                                          : Icons.visibility_off_outlined,
-                                      color: const Color(0xFF9E9E9E),
+                                          ? Icons.visibility_rounded
+                                          : Icons.visibility_off_rounded,
+                                      color: EduBridgeColors.textTertiary,
                                     ),
                                     onPressed: () {
                                       setState(() {
@@ -383,7 +529,7 @@ class _RegisterPageV2State extends State<RegisterPageV2> {
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Entrez un mot de passe';
+                                    return 'Un mot de passe, s\'il te plaît';
                                   }
                                   if (value.length < 6) {
                                     return 'Au moins 6 caractères';
@@ -395,17 +541,18 @@ class _RegisterPageV2State extends State<RegisterPageV2> {
                               TextFormField(
                                 controller: _confirmPasswordController,
                                 obscureText: _obscureConfirmPassword,
+                                style: EduBridgeTypography.bodyLarge,
                                 decoration: _inputDecoration(
-                                  labelText: 'Confirmer le mot de passe',
+                                  labelText: 'Confirmer',
                                   hintText: '••••••••',
-                                  prefixIcon: Icons.lock_outline_rounded,
+                                  prefixIcon: Icons.verified_user_rounded,
                                 ).copyWith(
                                   suffixIcon: IconButton(
                                     icon: Icon(
                                       _obscureConfirmPassword
-                                          ? Icons.visibility_outlined
-                                          : Icons.visibility_off_outlined,
-                                      color: const Color(0xFF9E9E9E),
+                                          ? Icons.visibility_rounded
+                                          : Icons.visibility_off_rounded,
+                                      color: EduBridgeColors.textTertiary,
                                     ),
                                     onPressed: () {
                                       setState(() {
@@ -417,52 +564,59 @@ class _RegisterPageV2State extends State<RegisterPageV2> {
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Confirmez le mot de passe';
+                                    return 'Confirme le mot de passe';
                                   }
                                   if (value != _passwordController.text) {
-                                    return 'Les mots de passe ne correspondent pas';
+                                    return 'Les deux ne matchent pas';
                                   }
                                   return null;
                                 },
                               ),
                               const SizedBox(height: 28),
-                              Material(
-                                elevation: 4,
-                                shadowColor: const Color(0xFF7C4DFF)
-                                    .withOpacity(0.4),
-                                borderRadius: BorderRadius.circular(14),
-                                child: SizedBox(
-                                  height: 54,
-                                  child: ElevatedButton(
-                                    onPressed: _handleRegister,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF7C4DFF),
-                                      foregroundColor: Colors.white,
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'S\'INSCRIRE',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: 1,
+                              DecoratedBox(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(22),
+                                  gradient: const LinearGradient(
+                                    begin: Alignment.centerLeft,
+                                    end: Alignment.centerRight,
+                                    colors: [
+                                      EduBridgeColors.primary,
+                                      EduBridgeColors.secondary,
+                                    ],
+                                  ),
+                                  boxShadow: EduBridgeColors.shadowPrimary,
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: _handleRegister,
+                                    borderRadius: BorderRadius.circular(22),
+                                    child: Container(
+                                      height: 56,
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        'C\'est parti !',
+                                        style: EduBridgeTypography.titleMedium
+                                            .copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.6,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 24),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                              const SizedBox(height: 20),
+                              Wrap(
+                                alignment: WrapAlignment.center,
+                                crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
                                   Text(
                                     'Déjà un compte ? ',
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 14,
+                                    style: EduBridgeTypography.bodyMedium
+                                        .copyWith(
+                                      color: EduBridgeColors.textSecondary,
                                     ),
                                   ),
                                   TextButton(
@@ -475,18 +629,14 @@ class _RegisterPageV2State extends State<RegisterPageV2> {
                                       );
                                     },
                                     style: TextButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 4,
+                                      foregroundColor:
+                                          EduBridgeColors.secondaryDark,
+                                      textStyle: EduBridgeTypography.bodyMedium
+                                          .copyWith(
+                                        fontWeight: FontWeight.w800,
                                       ),
                                     ),
-                                    child: const Text(
-                                      'Se connecter',
-                                      style: TextStyle(
-                                        color: Color(0xFF7C4DFF),
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
-                                      ),
-                                    ),
+                                    child: const Text('Se connecter'),
                                   ),
                                 ],
                               ),
@@ -496,9 +646,12 @@ class _RegisterPageV2State extends State<RegisterPageV2> {
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ),
+        ],
+      ),
     );
   }
 }

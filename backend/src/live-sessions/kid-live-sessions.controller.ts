@@ -1,8 +1,4 @@
-import {
-  Controller,
-  Get,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { LiveSessionsService } from './live-sessions.service';
 import { KidAuthGuard } from '../kids/guards/kid-auth.guard';
 import { GetKid } from '../kids/decorators/get-kid.decorator';
@@ -14,7 +10,9 @@ export class KidLiveSessionsController {
 
   @Get()
   async getKidLiveSessions(@GetKid() kid: any) {
-    const liveSessions = await this.liveSessionsService.getKidLiveSessions(kid.id);
+    const liveSessions = await this.liveSessionsService.getKidLiveSessions(
+      kid.id,
+    );
 
     return liveSessions.map((session) => ({
       id: session._id.toString(),

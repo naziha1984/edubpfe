@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/assignment_model.dart';
+import '../utils/upload_url.dart';
 import '../ui/theme/edubridge_colors.dart';
 import '../ui/theme/edubridge_typography.dart';
 import '../ui/theme/edubridge_theme.dart';
@@ -77,6 +79,27 @@ class _AssignmentCardState extends State<AssignmentCard>
   String _getStatusText(SubmissionStatus? status) {
     if (status == null) return 'Non assigné';
     return status.displayName;
+  }
+
+  IconData _iconForMime(String mime) {
+    final m = mime.toLowerCase();
+    if (m.contains('pdf')) return Icons.picture_as_pdf_rounded;
+    if (m.startsWith('image/')) return Icons.image_rounded;
+    if (m.startsWith('video/')) return Icons.movie_rounded;
+    if (m.contains('word') || m.contains('document')) {
+      return Icons.description_rounded;
+    }
+    if (m.contains('sheet') || m.contains('excel')) {
+      return Icons.table_chart_rounded;
+    }
+    return Icons.attach_file_rounded;
+  }
+
+  Future<void> _openAttachment(String url) async {
+    final uri = Uri.parse(absoluteUploadUrl(url));
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   Color _getDueDateColor() {
@@ -193,6 +216,43 @@ class _AssignmentCardState extends State<AssignmentCard>
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
+                ),
+              ],
+              if (widget.assignment.attachments.isNotEmpty) ...[
+                const SizedBox(height: EduBridgeTheme.spacingMD),
+                Text(
+                  'Pièces jointes',
+                  style: EduBridgeTypography.labelSmall.copyWith(
+                    color: EduBridgeColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: widget.assignment.attachments.map((a) {
+                    return ActionChip(
+                      avatar: Icon(
+                        _iconForMime(a.mimeType),
+                        size: 18,
+                        color: EduBridgeColors.secondaryDark,
+                      ),
+                      label: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 160),
+                        child: Text(
+                          a.originalName,
+                          overflow: TextOverflow.ellipsis,
+                          style: EduBridgeTypography.labelSmall,
+                        ),
+                      ),
+                      backgroundColor:
+                          EduBridgeColors.secondaryContainer.withOpacity(0.5),
+                      onPressed: a.url.isEmpty
+                          ? null
+                          : () => _openAttachment(a.url),
+                    );
+                  }).toList(),
                 ),
               ],
               const SizedBox(height: EduBridgeTheme.spacingSM),

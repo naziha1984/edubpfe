@@ -1,0 +1,30 @@
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      MONGODB_URI: mongodb://mongo:27017/edubridge
+      JWT_SECRET: "replace-me"
+    volumes:
+      # Persist les fichiers uploadés (PDF/images/vidéos) pour conserver entre redémarrages
+      - ./backend/uploads:/app/uploads
+
+volumes:
+  mongo_data:
+

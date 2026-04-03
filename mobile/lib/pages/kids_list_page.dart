@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../theme/colors.dart';
 import '../theme/typography.dart';
@@ -6,6 +7,8 @@ import '../components/gradient_button.dart';
 import '../components/glass_card.dart';
 import '../components/loading.dart';
 import '../components/empty_state.dart';
+import '../components/join_class_bottom_sheet.dart';
+import '../components/toast.dart';
 import '../providers/kids_provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/error_handler.dart';
@@ -13,7 +16,6 @@ import '../utils/rtl_support.dart';
 import '../utils/app_router.dart';
 import 'add_kid_page.dart';
 import 'set_pin_page.dart';
-import 'subjects_page.dart';
 import 'verify_pin_page.dart';
 
 class KidsListPage extends StatefulWidget {
@@ -42,6 +44,38 @@ class _KidsListPageState extends State<KidsListPage> {
       context,
       () => kidsProvider.loadKids(),
     );
+  }
+
+  Future<void> _openJoinClassSheet() async {
+    final kidsProvider = Provider.of<KidsProvider>(context, listen: false);
+    if (kidsProvider.kids.isEmpty) {
+      ErrorHandler.showError(
+        context,
+        Exception('Ajoute d\'abord un enfant dans « Add Kid »'),
+      );
+      return;
+    }
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: JoinClassBottomSheet(kids: kidsProvider.kids),
+      ),
+    );
+    if (result == true && mounted) {
+      Toast.success(context, 'Inscription à la classe réussie !');
+    }
+  }
+
+  Future<void> _copyKidId(String kidId) async {
+    await Clipboard.setData(ClipboardData(text: kidId));
+    if (mounted) {
+      Toast.success(context, 'Identifiant copié — à envoyer à l’enseignant si besoin');
+    }
   }
 
   @override
@@ -205,6 +239,44 @@ class _KidsListPageState extends State<KidsListPage> {
                                                   style: EduBridgeTypography
                                                       .bodyMedium,
                                                 ),
+                                              const SizedBox(height: 6),
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      'ID élève : ${kid['id']}',
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: EduBridgeTypography
+                                                          .bodySmall
+                                                          .copyWith(
+                                                        color: EduBridgeColors
+                                                            .textTertiary,
+                                                        fontSize: 11,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.copy_rounded,
+                                                      size: 20,
+                                                    ),
+                                                    padding: EdgeInsets.zero,
+                                                    constraints:
+                                                        const BoxConstraints(
+                                                      minWidth: 32,
+                                                      minHeight: 32,
+                                                    ),
+                                                    tooltip:
+                                                        'Copier l’ID pour l’enseignant',
+                                                    onPressed: () =>
+                                                        _copyKidId(
+                                                      kid['id'].toString(),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
                                             ],
                                           ),
                                         ),
@@ -227,23 +299,42 @@ class _KidsListPageState extends State<KidsListPage> {
                               ),
                             ),
                 ),
-                // Add Kid Button
+                // Add kid + join class
                 Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: GradientButton(
-                    text: 'Add Kid',
-                    icon: Icons.add,
-                    onPressed: () async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AddKidPage(),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      GradientButton(
+                        text: 'Add Kid',
+                        icon: Icons.add,
+                        onPressed: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AddKidPage(),
+                            ),
+                          );
+                          if (result == true) {
+                            _loadKids();
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: _openJoinClassSheet,
+                        icon: const Icon(Icons.key_rounded),
+                        label: const Text('Rejoindre une classe (code)'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: EduBridgeColors.primary,
+                          side: const BorderSide(
+                            color: EduBridgeColors.primary,
+                            width: 1.5,
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
-                      );
-                      if (result == true) {
-                        _loadKids();
-                      }
-                    },
+                      ),
+                    ],
                   ),
                 ),
               ],

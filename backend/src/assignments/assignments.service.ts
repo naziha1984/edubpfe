@@ -6,38 +6,72 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Assignment, AssignmentDocument } from '../notifications/schemas/assignment.schema';
-import { AssignmentSubmission, AssignmentSubmissionDocument, SubmissionStatus } from './schemas/assignment-submission.schema';
+import {
+  Assignment,
+  AssignmentDocument,
+} from '../notifications/schemas/assignment.schema';
+import {
+  AssignmentSubmission,
+  AssignmentSubmissionDocument,
+  SubmissionStatus,
+} from './schemas/assignment-submission.schema';
 import { CreateAssignmentDto } from './dto/create-assignment.dto';
 import { ClassesService } from '../classes/classes.service';
+import { ASSIGNMENTS_UPLOAD_SUBDIR } from './assignment-upload.config';
+import { mapAssignmentAttachment } from './assignment-response.util';
 
 @Injectable()
 export class AssignmentsService {
   constructor(
-    @InjectModel(Assignment.name) private assignmentModel: Model<AssignmentDocument>,
-    @InjectModel(AssignmentSubmission.name) private submissionModel: Model<AssignmentSubmissionDocument>,
+    @InjectModel(Assignment.name)
+    private assignmentModel: Model<AssignmentDocument>,
+    @InjectModel(AssignmentSubmission.name)
+    private submissionModel: Model<AssignmentSubmissionDocument>,
     private classesService: ClassesService,
   ) {}
 
-  async createAssignment(createAssignmentDto: CreateAssignmentDto, teacherId: string): Promise<AssignmentDocument> {
+  async createAssignment(
+    createAssignmentDto: CreateAssignmentDto,
+    teacherId: string,
+    uploadedFiles: Express.Multer.File[] = [],
+  ): Promise<AssignmentDocument> {
     // Verify class ownership
-    const isOwner = await this.classesService.checkOwnership(createAssignmentDto.classId, teacherId);
+    const isOwner = await this.classesService.checkOwnership(
+      createAssignmentDto.classId,
+      teacherId,
+    );
     if (!isOwner) {
-      throw new ForbiddenException('You can only create assignments for your own classes');
+      throw new ForbiddenException(
+        'You can only create assignments for your own classes',
+      );
     }
+
+    const attachments = uploadedFiles.map((f) => ({
+      originalName: f.originalname,
+      storedName: f.filename,
+      mimeType: f.mimetype,
+      size: f.size,
+      urlPath: `${ASSIGNMENTS_UPLOAD_SUBDIR}/${f.filename}`,
+    }));
 
     const assignment = new this.assignmentModel({
       ...createAssignmentDto,
       classId: new Types.ObjectId(createAssignmentDto.classId),
       teacherId: new Types.ObjectId(teacherId),
-      lessonId: createAssignmentDto.lessonId ? new Types.ObjectId(createAssignmentDto.lessonId) : undefined,
+      lessonId: createAssignmentDto.lessonId
+        ? new Types.ObjectId(createAssignmentDto.lessonId)
+        : undefined,
       dueDate: new Date(createAssignmentDto.dueDate),
+      attachments,
     });
 
     const savedAssignment = await assignment.save();
 
     // Create submissions for all class members
-    const members = await this.classesService.getClassMembers(createAssignmentDto.classId, teacherId);
+    const members = await this.classesService.getClassMembers(
+      createAssignmentDto.classId,
+      teacherId,
+    );
     for (const member of members) {
       await this.submissionModel.create({
         assignmentId: savedAssignment._id,
@@ -49,10 +83,18 @@ export class AssignmentsService {
     return savedAssignment;
   }
 
-  async getAssignmentsByClass(classId: string, teacherId: string): Promise<AssignmentDocument[]> {
-    const isOwner = await this.classesService.checkOwnership(classId, teacherId);
+  async getAssignmentsByClass(
+    classId: string,
+    teacherId: string,
+  ): Promise<AssignmentDocument[]> {
+    const isOwner = await this.classesService.checkOwnership(
+      classId,
+      teacherId,
+    );
     if (!isOwner) {
-      throw new ForbiddenException('You can only view assignments for your own classes');
+      throw new ForbiddenException(
+        'You can only view assignments for your own classes',
+      );
     }
 
     return this.assignmentModel
@@ -68,9 +110,14 @@ export class AssignmentsService {
       throw new NotFoundException('Assignment not found');
     }
 
-    const isOwner = await this.classesService.checkOwnership(assignment.classId.toString(), teacherId);
+    const isOwner = await this.classesService.checkOwnership(
+      assignment.classId.toString(),
+      teacherId,
+    );
     if (!isOwner) {
-      throw new ForbiddenException('You can only view submissions for your own assignments');
+      throw new ForbiddenException(
+        'You can only view submissions for your own assignments',
+      );
     }
 
     return this.submissionModel
@@ -127,6 +174,9 @@ export class AssignmentsService {
         description: assignment.description,
         dueDate: assignment.dueDate,
         isActive: assignment.isActive,
+        attachments: (assignment.attachments || []).map(
+          mapAssignmentAttachment,
+        ),
         submission: submission
           ? {
               id: submission._id.toString(),
@@ -143,7 +193,10 @@ export class AssignmentsService {
     });
   }
 
-  async startAssignment(assignmentId: string, kidId: string): Promise<AssignmentSubmissionDocument> {
+  async startAssignment(
+    assignmentId: string,
+    kidId: string,
+  ): Promise<AssignmentSubmissionDocument> {
     const assignment = await this.assignmentModel.findById(assignmentId).exec();
     if (!assignment) {
       throw new NotFoundException('Assignment not found');
@@ -153,7 +206,9 @@ export class AssignmentsService {
     const classes = await this.classesService.getKidClasses(kidId);
     const classIds = classes.map((c) => c._id.toString());
     if (!classIds.includes(assignment.classId.toString())) {
-      throw new ForbiddenException('You can only start assignments for your classes');
+      throw new ForbiddenException(
+        'You can only start assignments for your classes',
+      );
     }
 
     // Find or create submission
@@ -202,7 +257,9 @@ export class AssignmentsService {
     const classes = await this.classesService.getKidClasses(kidId);
     const classIds = classes.map((c) => c._id.toString());
     if (!classIds.includes(assignment.classId.toString())) {
-      throw new ForbiddenException('You can only submit assignments for your classes');
+      throw new ForbiddenException(
+        'You can only submit assignments for your classes',
+      );
     }
 
     // Find submission
@@ -214,7 +271,9 @@ export class AssignmentsService {
       .exec();
 
     if (!submission) {
-      throw new NotFoundException('Assignment submission not found. Please start the assignment first.');
+      throw new NotFoundException(
+        'Assignment submission not found. Please start the assignment first.',
+      );
     }
 
     if (submission.status === SubmissionStatus.COMPLETED) {

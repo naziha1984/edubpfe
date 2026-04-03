@@ -2,6 +2,9 @@
 /dist
 /node_modules
 
+# Fichiers téléversés (devoirs, etc.)
+/uploads
+
 # Environment variables
 .env
 .env.local

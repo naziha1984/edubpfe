@@ -26,6 +26,28 @@ class KidsProvider with ChangeNotifier {
     }
   }
 
+  /// Associe un enfant du parent à une classe via son code (ex. LSTUWO).
+  Future<void> joinClass({
+    required String kidId,
+    required String classCode,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _apiService.joinClass(
+        kidId: kidId,
+        classCode: classCode,
+      );
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   Future<bool> addKid({
     required String firstName,
     required String lastName,

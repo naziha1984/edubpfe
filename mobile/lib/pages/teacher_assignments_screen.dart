@@ -42,7 +42,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
   }
 
   Future<void> _showCreateDialog() async {
-    final result = await showModalBottomSheet<Map<String, dynamic>>(
+    final result = await showModalBottomSheet<AssignmentFormResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -56,12 +56,15 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
     }
   }
 
-  Future<void> _handleCreate(Map<String, dynamic> data) async {
+  Future<void> _handleCreate(AssignmentFormResult result) async {
     final provider = Provider.of<AssignmentsProvider>(context, listen: false);
 
     final success = await ErrorHandler.handleApiCall(
       context,
-      () => provider.createAssignment(data),
+      () => provider.createAssignment(
+        result.data,
+        files: result.files,
+      ),
     );
 
     if (success == true && mounted) {

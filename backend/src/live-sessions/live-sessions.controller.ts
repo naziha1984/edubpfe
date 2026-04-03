@@ -31,7 +31,7 @@ export class LiveSessionsController {
   ) {
     // Override classId from param
     const dto = { ...createLiveSessionDto, classId };
-    
+
     const liveSession = await this.liveSessionsService.createLiveSession(
       dto,
       user.id,

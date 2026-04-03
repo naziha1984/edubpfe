@@ -1,7 +1,5 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart';
-
 class ApiService {
   static const String baseUrl = 'http://localhost:3000/api';
   String? _token;
@@ -192,6 +190,24 @@ class ApiService {
     await _handleResponse(response);
   }
 
+  /// Inscrit un enfant à une classe avec le code communiqué par l'enseignant.
+  /// Réservé au compte PARENT (JWT).
+  Future<Map<String, dynamic>> joinClass({
+    required String kidId,
+    required String classCode,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/classes/join'),
+      headers: _getHeaders(),
+      body: json.encode({
+        'kidId': kidId,
+        'classCode': classCode.trim().toUpperCase(),
+      }),
+    );
+
+    return await _handleResponse(response);
+  }
+
   Future<Map<String, dynamic>> verifyPin({
     required String kidId,
     required String pin,
@@ -299,6 +315,34 @@ class ApiService {
     );
 
     return await _handleResponse(response);
+  }
+
+  // Chatbot endpoints (kid session required)
+  Future<Map<String, dynamic>> sendChatbotMessage({
+    required String message,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/chatbot/message'),
+      headers: _getHeaders(useKidToken: true),
+      body: json.encode({'message': message}),
+    );
+
+    return await _handleResponse(response);
+  }
+
+  Future<List<dynamic>> getChatbotHistory({
+    required String sessionId,
+  }) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/chatbot/history/$sessionId'),
+      headers: _getHeaders(useKidToken: true),
+    );
+
+    final data = await _handleResponse(response);
+    if (data is List) {
+      return data;
+    }
+    return [];
   }
 }
 

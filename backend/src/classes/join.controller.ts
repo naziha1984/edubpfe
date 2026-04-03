@@ -36,10 +36,12 @@ export class JoinController {
     }
 
     if (kid.parentId.toString() !== user.id) {
-      throw new ForbiddenException('You can only join classes for your own kids');
+      throw new ForbiddenException(
+        'You can only join classes for your own kids',
+      );
     }
 
-    const membership = await this.classesService.joinClass(joinClassDto, user.id);
+    const membership = await this.classesService.joinClass(joinClassDto);
 
     return {
       id: membership._id.toString(),

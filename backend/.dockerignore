@@ -1,0 +1,13 @@
+node_modules
+dist
+uploads
+assets
+.env
+.env.*
+.git
+.github
+*.log
+npm-debug.log*
+Dockerfile
+docker-compose.yml
+

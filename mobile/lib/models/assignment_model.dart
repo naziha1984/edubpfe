@@ -1,3 +1,27 @@
+class AssignmentAttachmentModel {
+  final String originalName;
+  final String mimeType;
+  final int size;
+  /// Chemin relatif côté API, ex. `/api/uploads/assignments/xxx.pdf`
+  final String url;
+
+  AssignmentAttachmentModel({
+    required this.originalName,
+    required this.mimeType,
+    required this.size,
+    required this.url,
+  });
+
+  factory AssignmentAttachmentModel.fromJson(Map<String, dynamic> json) {
+    return AssignmentAttachmentModel(
+      originalName: json['originalName']?.toString() ?? 'fichier',
+      mimeType: json['mimeType']?.toString() ?? 'application/octet-stream',
+      size: json['size'] is int ? json['size'] as int : int.tryParse('${json['size']}') ?? 0,
+      url: json['url']?.toString() ?? '',
+    );
+  }
+}
+
 class AssignmentModel {
   final String id;
   final String classId;
@@ -10,6 +34,7 @@ class AssignmentModel {
   final bool isActive;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final List<AssignmentAttachmentModel> attachments;
   final AssignmentSubmissionModel? submission; // For kid view
 
   AssignmentModel({
@@ -24,6 +49,7 @@ class AssignmentModel {
     this.isActive = true,
     this.createdAt,
     this.updatedAt,
+    this.attachments = const [],
     this.submission,
   });
 
@@ -48,6 +74,14 @@ class AssignmentModel {
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'])
           : null,
+      attachments: json['attachments'] is List
+          ? (json['attachments'] as List)
+              .whereType<Map>()
+              .map((e) => AssignmentAttachmentModel.fromJson(
+                    Map<String, dynamic>.from(e),
+                  ))
+              .toList()
+          : [],
       submission: json['submission'] != null
           ? AssignmentSubmissionModel.fromJson(json['submission'])
           : null,
@@ -76,6 +110,7 @@ class AssignmentModel {
     bool? isActive,
     DateTime? createdAt,
     DateTime? updatedAt,
+    List<AssignmentAttachmentModel>? attachments,
     AssignmentSubmissionModel? submission,
   }) {
     return AssignmentModel(
@@ -90,6 +125,7 @@ class AssignmentModel {
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      attachments: attachments ?? this.attachments,
       submission: submission ?? this.submission,
     );
   }

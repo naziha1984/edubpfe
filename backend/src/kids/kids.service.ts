@@ -16,7 +16,9 @@ export class KidsService {
   constructor(@InjectModel(Kid.name) private kidModel: Model<KidDocument>) {}
 
   async findAllByParentId(parentId: string): Promise<KidDocument[]> {
-    return this.kidModel.find({ parentId: new Types.ObjectId(parentId) }).exec();
+    return this.kidModel
+      .find({ parentId: new Types.ObjectId(parentId) })
+      .exec();
   }
 
   async findOneById(kidId: string): Promise<KidDocument | null> {
@@ -31,7 +33,10 @@ export class KidsService {
     return kid.parentId.toString() === parentId;
   }
 
-  async create(createKidDto: CreateKidDto, parentId: string): Promise<KidDocument> {
+  async create(
+    createKidDto: CreateKidDto,
+    parentId: string,
+  ): Promise<KidDocument> {
     const kidData = {
       ...createKidDto,
       parentId: new Types.ObjectId(parentId),
@@ -55,7 +60,9 @@ export class KidsService {
     }
 
     if (kid.parentId.toString() !== parentId) {
-      throw new ForbiddenException('You do not have permission to update this kid');
+      throw new ForbiddenException(
+        'You do not have permission to update this kid',
+      );
     }
 
     const updateData: any = { ...updateKidDto };
@@ -75,7 +82,9 @@ export class KidsService {
     }
 
     if (kid.parentId.toString() !== parentId) {
-      throw new ForbiddenException('You do not have permission to delete this kid');
+      throw new ForbiddenException(
+        'You do not have permission to delete this kid',
+      );
     }
 
     await this.kidModel.findByIdAndDelete(kidId).exec();
@@ -88,15 +97,19 @@ export class KidsService {
     }
 
     if (kid.parentId.toString() !== parentId) {
-      throw new ForbiddenException('You do not have permission to set PIN for this kid');
+      throw new ForbiddenException(
+        'You do not have permission to set PIN for this kid',
+      );
     }
 
     const hashedPin = await bcrypt.hash(pin, 10);
-    await this.kidModel.findByIdAndUpdate(kidId, {
-      hashedPin,
-      failedPinAttempts: 0,
-      pinLockedUntil: null,
-    }).exec();
+    await this.kidModel
+      .findByIdAndUpdate(kidId, {
+        hashedPin,
+        failedPinAttempts: 0,
+        pinLockedUntil: null,
+      })
+      .exec();
   }
 
   async verifyPin(kidId: string, pin: string): Promise<boolean> {
@@ -124,10 +137,12 @@ export class KidsService {
 
     if (isPinValid) {
       // Reset failed attempts on successful verification
-      await this.kidModel.findByIdAndUpdate(kidId, {
-        failedPinAttempts: 0,
-        pinLockedUntil: null,
-      }).exec();
+      await this.kidModel
+        .findByIdAndUpdate(kidId, {
+          failedPinAttempts: 0,
+          pinLockedUntil: null,
+        })
+        .exec();
       return true;
     } else {
       // Increment failed attempts

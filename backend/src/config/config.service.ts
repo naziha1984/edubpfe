@@ -6,7 +6,10 @@ export class ConfigService {
   constructor(private configService: NestConfigService) {}
 
   get mongodbUri(): string {
-    return this.configService.get<string>('MONGODB_URI', 'mongodb://localhost:27017/edubridge');
+    return this.configService.get<string>(
+      'MONGODB_URI',
+      'mongodb://localhost:27017/edubridge',
+    );
   }
 
   get jwtSecret(): string {

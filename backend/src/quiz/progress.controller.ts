@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { ProgressService } from './progress.service';
 import { KidAuthGuard } from '../kids/guards/kid-auth.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';

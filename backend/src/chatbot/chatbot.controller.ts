@@ -42,12 +42,9 @@ export class ChatbotController {
 
   @Get('history/:sessionId')
   @UseGuards(KidAuthGuard)
-  async getHistory(
-    @Param('sessionId') sessionId: string,
-    @GetKid() kid: any,
-  ) {
+  async getHistory(@Param('sessionId') sessionId: string, @GetKid() kid: any) {
     // 验证会话属于该 kid（通过 ChatbotService 内部验证）
-    const history = await this.chatbotService.getHistory(sessionId);
+    const history = await this.chatbotService.getHistory(sessionId, kid.kidId);
 
     return history.map((msg) => ({
       id: msg._id.toString(),

@@ -19,7 +19,8 @@ export class ClassMembership {
   isActive: boolean;
 }
 
-export const ClassMembershipSchema = SchemaFactory.createForClass(ClassMembership);
+export const ClassMembershipSchema =
+  SchemaFactory.createForClass(ClassMembership);
 
 // 确保每个 kid 在每个 class 中只有一个成员记录
 ClassMembershipSchema.index({ classId: 1, kidId: 1 }, { unique: true });

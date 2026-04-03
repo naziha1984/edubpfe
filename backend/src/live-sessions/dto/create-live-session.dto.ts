@@ -1,4 +1,11 @@
-import { IsString, IsNotEmpty, IsOptional, IsMongoId, IsDateString, IsUrl } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsMongoId,
+  IsDateString,
+  IsUrl,
+} from 'class-validator';
 
 export class CreateLiveSessionDto {
   @IsMongoId()

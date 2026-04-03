@@ -1,4 +1,10 @@
-import { IsMongoId, IsNotEmpty, IsArray, IsNumber, ArrayMinSize } from 'class-validator';
+import {
+  IsMongoId,
+  IsNotEmpty,
+  IsArray,
+  IsNumber,
+  ArrayMinSize,
+} from 'class-validator';
 
 export class AnswerDto {
   @IsNumber()

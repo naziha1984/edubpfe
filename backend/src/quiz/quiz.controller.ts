@@ -40,14 +40,8 @@ export class QuizController {
   @Post('submit')
   @UseGuards(KidAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async submitQuiz(
-    @Body() submitQuizDto: SubmitQuizDto,
-    @GetKid() kid: any,
-  ) {
-    const result = await this.quizService.submitQuiz(
-      submitQuizDto,
-      kid.kidId,
-    );
+  async submitQuiz(@Body() submitQuizDto: SubmitQuizDto, @GetKid() kid: any) {
+    const result = await this.quizService.submitQuiz(submitQuizDto, kid.kidId);
 
     return {
       sessionId: submitQuizDto.sessionId,

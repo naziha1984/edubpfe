@@ -5,7 +5,9 @@ import { Badge, BadgeDocument, BadgeType } from './schemas/badge.schema';
 
 @Injectable()
 export class BadgeService {
-  constructor(@InjectModel(Badge.name) private badgeModel: Model<BadgeDocument>) {}
+  constructor(
+    @InjectModel(Badge.name) private badgeModel: Model<BadgeDocument>,
+  ) {}
 
   async createOrUpdate(badgeData: {
     type: BadgeType;

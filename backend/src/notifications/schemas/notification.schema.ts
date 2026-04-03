@@ -9,7 +9,7 @@ export type NotificationDocument = Notification &
 
 export enum NotificationType {
   ASSIGNMENT_DUE_24H = 'ASSIGNMENT_DUE_24H', // 作业到期前24小时
-  INACTIVITY_3_DAYS = 'INACTIVITY_3_DAYS',   // 3天不活动
+  INACTIVITY_3_DAYS = 'INACTIVITY_3_DAYS', // 3天不活动
 }
 
 export enum NotificationStatus {
@@ -25,7 +25,11 @@ export class Notification {
   @Prop({ required: true, enum: NotificationType })
   type: NotificationType;
 
-  @Prop({ required: true, enum: NotificationStatus, default: NotificationStatus.UNREAD })
+  @Prop({
+    required: true,
+    enum: NotificationStatus,
+    default: NotificationStatus.UNREAD,
+  })
   status: NotificationStatus;
 
   @Prop({ required: true })
