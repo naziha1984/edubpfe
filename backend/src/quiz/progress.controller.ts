@@ -62,4 +62,32 @@ export class ProgressController {
       updatedAt: p.updatedAt,
     }));
   }
+
+  @Get('parent/kids/:kidId/summary')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.PARENT)
+  async getParentSummary(
+    @Param('kidId') kidId: string,
+    @GetUser() user: any,
+  ) {
+    return this.progressService.getKidProgressSummaryForParent(
+      kidId,
+      user.id,
+    );
+  }
+
+  @Get('teacher/classes/:classId/kids/:kidId/summary')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.TEACHER)
+  async getTeacherSummary(
+    @Param('classId') classId: string,
+    @Param('kidId') kidId: string,
+    @GetUser() user: any,
+  ) {
+    return this.progressService.getKidProgressSummaryForTeacher(
+      classId,
+      kidId,
+      user.id,
+    );
+  }
 }

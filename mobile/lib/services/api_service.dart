@@ -1,7 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 class ApiService {
-  static const String baseUrl = 'http://localhost:3000/api';
+  /// 默认 `http://localhost:3000/api`。若后端端口不同，运行：
+  /// `flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:3001/api`
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://localhost:3000/api',
+  );
   String? _token;
   String? _kidToken;
 
@@ -71,11 +76,12 @@ class ApiService {
     required String lastName,
     String role = 'PARENT',
   }) async {
+    final normalizedEmail = email.trim().toLowerCase();
     final response = await http.post(
       Uri.parse('$baseUrl/auth/register'),
       headers: _getHeaders(),
       body: json.encode({
-        'email': email,
+        'email': normalizedEmail,
         'password': password,
         'firstName': firstName,
         'lastName': lastName,
@@ -94,11 +100,12 @@ class ApiService {
     required String email,
     required String password,
   }) async {
+    final normalizedEmail = email.trim().toLowerCase();
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login'),
       headers: _getHeaders(),
       body: json.encode({
-        'email': email,
+        'email': normalizedEmail,
         'password': password,
       }),
     );
@@ -288,17 +295,53 @@ class ApiService {
   Future<Map<String, dynamic>> createQuizSession({
     required String kidId,
     required String lessonId,
+    String? difficulty,
   }) async {
+    final body = <String, dynamic>{
+      'kidId': kidId,
+      'lessonId': lessonId,
+    };
+    if (difficulty != null && difficulty.isNotEmpty) {
+      body['difficulty'] = difficulty;
+    }
     final response = await http.post(
       Uri.parse('$baseUrl/quiz/sessions'),
       headers: _getHeaders(useKidToken: true),
-      body: json.encode({
-        'kidId': kidId,
-        'lessonId': lessonId,
-      }),
+      body: json.encode(body),
     );
 
     return await _handleResponse(response);
+  }
+
+  /// Aligné sur la session (filtre difficulté créé côté serveur).
+  Future<List<dynamic>> getQuizQuestionsForSession(String sessionId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/quiz/sessions/$sessionId/questions'),
+      headers: _getHeaders(useKidToken: true),
+    );
+    final data = await _handleResponse(response);
+    if (data is List) {
+      return data;
+    }
+    return [];
+  }
+
+  Future<List<dynamic>> getQuizQuestionsForLesson(
+    String lessonId, {
+    String? difficulty,
+  }) async {
+    final q = difficulty != null && difficulty.isNotEmpty
+        ? '?difficulty=${Uri.encodeQueryComponent(difficulty)}'
+        : '';
+    final response = await http.get(
+      Uri.parse('$baseUrl/quiz/lessons/$lessonId/questions$q'),
+      headers: _getHeaders(useKidToken: true),
+    );
+    final data = await _handleResponse(response);
+    if (data is List) {
+      return data;
+    }
+    return [];
   }
 
   Future<Map<String, dynamic>> submitQuiz({
@@ -317,13 +360,43 @@ class ApiService {
     return await _handleResponse(response);
   }
 
+  Future<List<dynamic>> getNotifications() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/notifications'),
+      headers: _getHeaders(),
+    );
+    final data = await _handleResponse(response);
+    if (data is List) {
+      return data;
+    }
+    return [];
+  }
+
+  Future<void> markNotificationRead(String id) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/notifications/$id/read'),
+      headers: _getHeaders(),
+    );
+    await _handleResponse(response);
+  }
+
+  Future<Map<String, dynamic>> getKidRewards() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/kid/rewards'),
+      headers: _getHeaders(useKidToken: true),
+    );
+    return await _handleResponse(response) as Map<String, dynamic>;
+  }
+
   // Chatbot endpoints (kid session required)
   Future<Map<String, dynamic>> sendChatbotMessage({
     required String message,
   }) async {
+    final canUseKid = _kidToken != null;
+    final endpoint = canUseKid ? '/chatbot/message' : '/chatbot/message-user';
     final response = await http.post(
-      Uri.parse('$baseUrl/chatbot/message'),
-      headers: _getHeaders(useKidToken: true),
+      Uri.parse('$baseUrl$endpoint'),
+      headers: _getHeaders(useKidToken: canUseKid),
       body: json.encode({'message': message}),
     );
 

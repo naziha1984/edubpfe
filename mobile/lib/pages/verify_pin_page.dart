@@ -79,65 +79,94 @@ class _VerifyPinPageState extends State<VerifyPinPage> {
         ),
         child: SafeArea(
           child: _isLoading
-              ? const Loading(message: 'Verifying PIN...')
-              : Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Enter PIN',
-                          style: EduBridgeTypography.displaySmall.copyWith(
+              ? const Loading(message: 'Vérification du PIN...')
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, right: 8),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back_rounded),
+                            tooltip: 'Retour à la liste des enfants',
+                            onPressed: () => Navigator.of(context).maybePop(),
                             color: EduBridgeColors.textPrimary,
-                            fontWeight: FontWeight.bold,
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'for ${widget.kidName}',
-                          style: EduBridgeTypography.bodyLarge.copyWith(
-                            color: EduBridgeColors.textSecondary,
+                          Expanded(
+                            child: Text(
+                              'Compte enfant',
+                              style: EduBridgeTypography.bodySmall.copyWith(
+                                color: EduBridgeColors.textSecondary,
+                              ),
+                              textAlign: TextAlign.end,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 40),
-                        GlassCard(
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Center(
+                        child: Padding(
                           padding: const EdgeInsets.all(24),
                           child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              TextFormField(
-                                controller: _pinController,
-                                keyboardType: TextInputType.number,
-                                maxLength: 4,
-                                obscureText: true,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 32,
-                                  letterSpacing: 8,
+                              Text(
+                                'Code PIN',
+                                style: EduBridgeTypography.displaySmall.copyWith(
+                                  color: EduBridgeColors.textPrimary,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                decoration: const InputDecoration(
-                                  labelText: 'PIN',
-                                  counterText: '',
-                                  border: OutlineInputBorder(),
-                                ),
-                                onChanged: (value) {
-                                  if (value.length == 4) {
-                                    _handleVerifyPin();
-                                  }
-                                },
                               ),
-                              const SizedBox(height: 24),
-                              GradientButton(
-                                text: 'Verify',
-                                icon: Icons.check,
-                                onPressed: _handleVerifyPin,
+                              const SizedBox(height: 8),
+                              Text(
+                                'pour ${widget.kidName}',
+                                style: EduBridgeTypography.bodyLarge.copyWith(
+                                  color: EduBridgeColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 40),
+                              GlassCard(
+                                padding: const EdgeInsets.all(24),
+                                child: Column(
+                                  children: [
+                                    TextFormField(
+                                      controller: _pinController,
+                                      keyboardType: TextInputType.number,
+                                      maxLength: 4,
+                                      obscureText: true,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 32,
+                                        letterSpacing: 8,
+                                      ),
+                                      decoration: const InputDecoration(
+                                        labelText: 'PIN',
+                                        counterText: '',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      onChanged: (value) {
+                                        if (value.length == 4) {
+                                          _handleVerifyPin();
+                                        }
+                                      },
+                                    ),
+                                    const SizedBox(height: 24),
+                                    GradientButton(
+                                      text: 'Vérifier',
+                                      icon: Icons.check,
+                                      onPressed: _handleVerifyPin,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
         ),
       ),

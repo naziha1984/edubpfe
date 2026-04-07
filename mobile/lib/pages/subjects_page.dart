@@ -8,6 +8,7 @@ import '../components/empty_state.dart';
 import '../providers/quiz_provider.dart';
 import '../utils/error_handler.dart';
 import 'lessons_page.dart';
+import 'kid_rewards_screen.dart';
 
 class SubjectsPage extends StatefulWidget {
   final String kidId;
@@ -56,17 +57,30 @@ class _SubjectsPageState extends State<SubjectsPage> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.arrow_back),
+                      tooltip: 'Retour',
                       onPressed: () => Navigator.pop(context),
                       color: EduBridgeColors.textPrimary,
                     ),
                     Expanded(
                       child: Text(
-                        'Subjects',
+                        'Matières',
                         style: EduBridgeTypography.headlineMedium.copyWith(
                           color: EduBridgeColors.textPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                    ),
+                    IconButton(
+                      tooltip: 'Récompenses',
+                      icon: const Icon(Icons.star_rounded, color: Colors.amber),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (_) => const KidRewardsScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -77,8 +91,10 @@ class _SubjectsPageState extends State<SubjectsPage> {
                     : quizProvider.subjects.isEmpty
                         ? const EmptyState(
                             icon: Icons.book_outlined,
-                            title: 'No Subjects',
-                            message: 'No subjects available',
+                            title: 'Aucune matière',
+                            message:
+                                'Les matières et leçons sont créées par un enseignant ou un administrateur. '
+                                'Connecte-toi avec un compte enseignant ou admin pour les ajouter.',
                           )
                         : RefreshIndicator(
                             onRefresh: _loadSubjects,
@@ -91,14 +107,27 @@ class _SubjectsPageState extends State<SubjectsPage> {
                                   margin: const EdgeInsets.only(bottom: 16),
                                   padding: const EdgeInsets.all(20),
                                   onTap: () {
+                                    final sid = subject['id']?.toString();
+                                    final sname =
+                                        subject['name']?.toString() ?? 'Matière';
+                                    if (sid == null || sid.isEmpty) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Matière invalide (identifiant manquant)',
+                                          ),
+                                        ),
+                                      );
+                                      return;
+                                    }
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => LessonsPage(
                                           kidId: widget.kidId,
                                           kidName: widget.kidName,
-                                          subjectId: subject['id'],
-                                          subjectName: subject['name'],
+                                          subjectId: sid,
+                                          subjectName: sname,
                                         ),
                                       ),
                                     );

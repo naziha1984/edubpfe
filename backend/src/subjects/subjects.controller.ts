@@ -19,12 +19,15 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/schemas/user.schema';
+import { mapLessonToJson } from './lesson-response.util';
+import { QuizQuestionCountService } from './quiz-question-count.service';
 
 @Controller('subjects')
 export class SubjectsController {
   constructor(
     private readonly subjectsService: SubjectsService,
     private readonly lessonsService: LessonsService,
+    private readonly quizQuestionCountService: QuizQuestionCountService,
   ) {}
 
   // Public endpoint
@@ -51,25 +54,19 @@ export class SubjectsController {
     }
 
     const lessons = await this.lessonsService.findAllBySubjectId(id);
-    return lessons.map((lesson) => ({
-      id: lesson._id.toString(),
-      subjectId: lesson.subjectId.toString(),
-      title: lesson.title,
-      description: lesson.description,
-      content: lesson.content,
-      order: lesson.order,
-      level: lesson.level,
-      language: lesson.language,
-      isActive: lesson.isActive,
-      createdAt: lesson.createdAt,
-      updatedAt: lesson.updatedAt,
-    }));
+    const lessonIds = lessons.map((l) => l._id.toString());
+    const counts =
+      await this.quizQuestionCountService.countByLessonIds(lessonIds);
+    return lessons.map((lesson) =>
+      mapLessonToJson(lesson, {
+        quizQuestionCount: counts.get(lesson._id.toString()) ?? 0,
+      }),
+    );
   }
 
-  // Admin endpoints
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createSubjectDto: CreateSubjectDto) {
     const subject = await this.subjectsService.create(createSubjectDto);

@@ -9,23 +9,24 @@ import '../ui/components/glass_card.dart';
 import '../components/student_card.dart';
 import '../components/add_student_bottom_sheet.dart';
 import '../ui/components/loading_skeleton.dart';
-import '../components/error_state.dart';
 import '../components/empty_state.dart';
 import '../components/toast.dart';
 import '../utils/error_handler.dart';
 import 'class_progress_screen.dart';
 import 'teacher_assignments_screen.dart';
 import 'teacher_live_sessions_screen.dart';
-import '../providers/subjects_provider.dart';
 import 'package:flutter/services.dart';
 
 /// Écran de détails d'une classe avec Tabs
 class ClassDetailsScreen extends StatefulWidget {
   final ClassModel classModel;
+  /// 0 = Students, 1 = Assignments, 2 = Live, 3 = Progress
+  final int initialTabIndex;
 
   const ClassDetailsScreen({
     super.key,
     required this.classModel,
+    this.initialTabIndex = 0,
   });
 
   @override
@@ -39,7 +40,8 @@ class _ClassDetailsScreenState extends State<ClassDetailsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    final idx = widget.initialTabIndex.clamp(0, 3);
+    _tabController = TabController(length: 4, vsync: this, initialIndex: idx);
     // Charger les détails de la classe au démarrage
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = Provider.of<TeacherProvider>(context, listen: false);

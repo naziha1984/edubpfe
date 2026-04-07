@@ -8,6 +8,7 @@ import { Model, Types } from 'mongoose';
 import { Lesson, LessonDocument } from './schemas/lesson.schema';
 import { CreateLessonDto } from './dto/create-lesson.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
+import { LESSONS_UPLOAD_SUBDIR } from './lesson-upload.config';
 
 @Injectable()
 export class LessonsService {
@@ -26,12 +27,31 @@ export class LessonsService {
     return this.lessonModel.findById(id).exec();
   }
 
-  async create(createLessonDto: CreateLessonDto): Promise<LessonDocument> {
+  async create(
+    createLessonDto: CreateLessonDto,
+    uploadedFiles: Express.Multer.File[] = [],
+    teacherId?: string,
+  ): Promise<LessonDocument> {
     try {
-      const lessonData = {
+      const attachments = uploadedFiles.map((f) => ({
+        originalName: f.originalname,
+        storedName: f.filename,
+        mimeType: f.mimetype,
+        size: f.size,
+        urlPath: `${LESSONS_UPLOAD_SUBDIR}/${f.filename}`,
+      }));
+      const lessonData: Record<string, unknown> = {
         ...createLessonDto,
         subjectId: new Types.ObjectId(createLessonDto.subjectId),
+        attachments,
       };
+      delete lessonData.classId;
+      if (createLessonDto.classId) {
+        lessonData.classId = new Types.ObjectId(createLessonDto.classId);
+      }
+      if (teacherId) {
+        lessonData.teacherId = new Types.ObjectId(teacherId);
+      }
       const lesson = new this.lessonModel(lessonData);
       return await lesson.save();
     } catch (error: any) {
@@ -47,6 +67,7 @@ export class LessonsService {
   async update(
     id: string,
     updateLessonDto: UpdateLessonDto,
+    uploadedFiles: Express.Multer.File[] = [],
   ): Promise<LessonDocument> {
     const lesson = await this.findOne(id);
     if (!lesson) {
@@ -57,6 +78,21 @@ export class LessonsService {
       const updateData: any = { ...updateLessonDto };
       if (updateLessonDto.subjectId) {
         updateData.subjectId = new Types.ObjectId(updateLessonDto.subjectId);
+      }
+      if (updateLessonDto.classId !== undefined) {
+        updateData.classId = updateLessonDto.classId
+          ? new Types.ObjectId(updateLessonDto.classId)
+          : null;
+      }
+      if (uploadedFiles.length > 0) {
+        const newAttachments = uploadedFiles.map((f) => ({
+          originalName: f.originalname,
+          storedName: f.filename,
+          mimeType: f.mimetype,
+          size: f.size,
+          urlPath: `${LESSONS_UPLOAD_SUBDIR}/${f.filename}`,
+        }));
+        updateData.$push = { attachments: { $each: newAttachments } };
       }
 
       return await this.lessonModel

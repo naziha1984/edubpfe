@@ -1,27 +1,60 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/api_service.dart';
+import '../main.dart';
 
 class ChatbotFloatingButton extends StatelessWidget {
   const ChatbotFloatingButton({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      right: 16,
-      bottom: 20,
-      child: FloatingActionButton.extended(
-        heroTag: 'chatbot_fab',
-        onPressed: () {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: () {
+          final navContext = appNavigatorKey.currentContext;
+          if (navContext == null) {
+            return;
+          }
           showModalBottomSheet<void>(
-            context: context,
+            context: navContext,
+            useRootNavigator: true,
             isScrollControlled: true,
             backgroundColor: Colors.transparent,
             builder: (_) => const _ChatbotPanel(),
           );
         },
-        icon: const Icon(Icons.smart_toy_rounded),
-        label: const Text('Chatbot'),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.18),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.smart_toy_rounded, color: Colors.white),
+              SizedBox(width: 8),
+              Text(
+                'Chatbot',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -50,12 +83,18 @@ class _ChatbotPanelState extends State<_ChatbotPanel> {
     if (text.isEmpty || _sending) return;
 
     final api = Provider.of<ApiService>(context, listen: false);
-    if (api.kidToken == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Le chatbot est disponible en mode enfant (après PIN).'),
-        ),
-      );
+
+    if (api.token == null && api.kidToken == null) {
+      setState(() {
+        _messages.add(
+          _ChatMsg(
+            text:
+                'Connecte-toi (parent, enseignant ou enfant avec code PIN) pour utiliser le chatbot. '
+                "Sur l'écran d'accueil, connecte un compte ou ouvre une session enfant.",
+            isUser: false,
+          ),
+        );
+      });
       return;
     }
 
@@ -127,7 +166,8 @@ class _ChatbotPanelState extends State<_ChatbotPanel> {
                     child: Padding(
                       padding: EdgeInsets.all(20),
                       child: Text(
-                        'Pose une question au chatbot.\n(Mode enfant requis)',
+                        'Pose une question au chatbot.\n'
+                        'Tu dois être connecté (compte parent / enseignant ou session enfant avec PIN).',
                         textAlign: TextAlign.center,
                       ),
                     ),

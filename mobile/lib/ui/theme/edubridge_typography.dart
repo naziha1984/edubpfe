@@ -1,30 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Système de typographie EduBridge
-/// Utilise Google Fonts avec des polices attrayantes pour les enfants
+/// Typographie produit — Inter + Cairo (arabe).
 class EduBridgeTypography {
-  // Font Families - Polices amusantes et lisibles pour enfants
-  static String get displayFontFamily => GoogleFonts.fredoka().fontFamily ?? 'Roboto';
-  static String get bodyFontFamily => GoogleFonts.nunito().fontFamily ?? 'Roboto';
+  static String get displayFontFamily => GoogleFonts.inter().fontFamily ?? 'Roboto';
+  static String get bodyFontFamily => GoogleFonts.inter().fontFamily ?? 'Roboto';
   static String get arabicFontFamily => GoogleFonts.cairo().fontFamily ?? 'Roboto';
 
-  // Display Styles - Pour les titres (Fredoka - ronde et lisible)
-  static TextStyle get displayLarge => GoogleFonts.fredoka(
+  static TextStyle get displayLarge => GoogleFonts.inter(
         fontSize: 57,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.25,
         height: 1.12,
       );
 
-  static TextStyle get displayMedium => GoogleFonts.fredoka(
+  static TextStyle get displayMedium => GoogleFonts.inter(
         fontSize: 45,
         fontWeight: FontWeight.w700,
         letterSpacing: 0,
         height: 1.16,
       );
 
-  static TextStyle get displaySmall => GoogleFonts.fredoka(
+  static TextStyle get displaySmall => GoogleFonts.inter(
         fontSize: 36,
         fontWeight: FontWeight.w600,
         letterSpacing: 0,
@@ -32,21 +29,21 @@ class EduBridgeTypography {
       );
 
   // Headline Styles
-  static TextStyle get headlineLarge => GoogleFonts.fredoka(
+  static TextStyle get headlineLarge => GoogleFonts.inter(
         fontSize: 32,
         fontWeight: FontWeight.w600,
         letterSpacing: 0,
         height: 1.25,
       );
 
-  static TextStyle get headlineMedium => GoogleFonts.fredoka(
+  static TextStyle get headlineMedium => GoogleFonts.inter(
         fontSize: 28,
         fontWeight: FontWeight.w600,
         letterSpacing: 0,
         height: 1.29,
       );
 
-  static TextStyle get headlineSmall => GoogleFonts.fredoka(
+  static TextStyle get headlineSmall => GoogleFonts.inter(
         fontSize: 24,
         fontWeight: FontWeight.w600,
         letterSpacing: 0,
@@ -54,21 +51,21 @@ class EduBridgeTypography {
       );
 
   // Title Styles - Pour les sous-titres (Nunito - douce et lisible)
-  static TextStyle get titleLarge => GoogleFonts.nunito(
+  static TextStyle get titleLarge => GoogleFonts.inter(
         fontSize: 22,
         fontWeight: FontWeight.w700,
         letterSpacing: 0,
         height: 1.27,
       );
 
-  static TextStyle get titleMedium => GoogleFonts.nunito(
+  static TextStyle get titleMedium => GoogleFonts.inter(
         fontSize: 18,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.15,
         height: 1.5,
       );
 
-  static TextStyle get titleSmall => GoogleFonts.nunito(
+  static TextStyle get titleSmall => GoogleFonts.inter(
         fontSize: 14,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.1,
@@ -76,21 +73,21 @@ class EduBridgeTypography {
       );
 
   // Body Styles - Pour le contenu principal (Nunito)
-  static TextStyle get bodyLarge => GoogleFonts.nunito(
+  static TextStyle get bodyLarge => GoogleFonts.inter(
         fontSize: 16,
         fontWeight: FontWeight.w400,
         letterSpacing: 0.5,
         height: 1.5,
       );
 
-  static TextStyle get bodyMedium => GoogleFonts.nunito(
+  static TextStyle get bodyMedium => GoogleFonts.inter(
         fontSize: 14,
         fontWeight: FontWeight.w400,
         letterSpacing: 0.25,
         height: 1.43,
       );
 
-  static TextStyle get bodySmall => GoogleFonts.nunito(
+  static TextStyle get bodySmall => GoogleFonts.inter(
         fontSize: 12,
         fontWeight: FontWeight.w400,
         letterSpacing: 0.4,
@@ -98,21 +95,21 @@ class EduBridgeTypography {
       );
 
   // Label Styles - Pour les boutons et labels (Nunito)
-  static TextStyle get labelLarge => GoogleFonts.nunito(
+  static TextStyle get labelLarge => GoogleFonts.inter(
         fontSize: 14,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.1,
         height: 1.43,
       );
 
-  static TextStyle get labelMedium => GoogleFonts.nunito(
+  static TextStyle get labelMedium => GoogleFonts.inter(
         fontSize: 12,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.5,
         height: 1.33,
       );
 
-  static TextStyle get labelSmall => GoogleFonts.nunito(
+  static TextStyle get labelSmall => GoogleFonts.inter(
         fontSize: 11,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.5,

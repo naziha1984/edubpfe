@@ -154,17 +154,55 @@ export class ChatbotService {
     };
   }
 
+  async sendMessageForUser(
+    message: string,
+  ): Promise<{
+    response: string;
+    language: string;
+    isFiltered: boolean;
+  }> {
+    if (!message || message.trim().length === 0) {
+      throw new BadRequestException('Message cannot be empty');
+    }
+
+    const detectedLanguage = this.languageDetector.detectLanguage(message);
+    const safetyCheck = this.safetyFilter.checkSafety(message, detectedLanguage);
+    if (!safetyCheck.isSafe) {
+      const safetyResponse = this.safetyFilter.getSafetyResponse(detectedLanguage);
+      return {
+        response: safetyResponse,
+        language: detectedLanguage,
+        isFiltered: true,
+      };
+    }
+
+    const aiResponse = await this.generateResponse(
+      message,
+      detectedLanguage,
+      undefined,
+    );
+    return {
+      response: aiResponse,
+      language: detectedLanguage,
+      isFiltered: false,
+    };
+  }
+
   private async generateResponse(
     message: string,
     language: 'ar' | 'fr' | 'en',
-    sessionId: string,
+    sessionId?: string,
   ): Promise<string> {
     // 如果配置了 AI，使用 AI 生成响应
     if (this.USE_AI) {
       if (this.OPENAI_API_KEY) {
-        return this.generateOpenAIResponse(message, language, sessionId);
+        return sessionId
+          ? this.generateOpenAIResponse(message, language, sessionId)
+          : this.generateOpenAIResponseStateless(message, language);
       } else if (this.GEMINI_API_KEY) {
-        return this.generateGeminiResponse(message, language, sessionId);
+        return sessionId
+          ? this.generateGeminiResponse(message, language, sessionId)
+          : this.generateGeminiResponseStateless(message, language);
       }
     }
 
@@ -247,7 +285,7 @@ export class ChatbotService {
 
       // 调用 Gemini API
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${this.GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${this.GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: {
@@ -270,6 +308,78 @@ export class ChatbotService {
       const data = await response.json();
       return (
         data.candidates[0]?.content?.parts[0]?.text ||
+        this.generateSimpleResponse(message, language)
+      );
+    } catch (error) {
+      console.error('Gemini API error:', error);
+      return this.generateSimpleResponse(message, language);
+    }
+  }
+
+  private async generateOpenAIResponseStateless(
+    message: string,
+    language: 'ar' | 'fr' | 'en',
+  ): Promise<string> {
+    try {
+      const systemPrompt = this.getSystemPrompt(language);
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: message },
+          ],
+          temperature: 0.7,
+          max_tokens: 200,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.statusText}`);
+      }
+      const data = await response.json();
+      return (
+        data.choices?.[0]?.message?.content ||
+        this.generateSimpleResponse(message, language)
+      );
+    } catch (error) {
+      console.error('OpenAI API error:', error);
+      return this.generateSimpleResponse(message, language);
+    }
+  }
+
+  private async generateGeminiResponseStateless(
+    message: string,
+    language: 'ar' | 'fr' | 'en',
+  ): Promise<string> {
+    try {
+      const systemPrompt = this.getSystemPrompt(language);
+      const fullPrompt = `${systemPrompt}\n\nUser: ${message}\nAssistant:`;
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${this.GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: fullPrompt }] }],
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`Gemini API error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return (
+        data.candidates?.[0]?.content?.parts?.[0]?.text ||
         this.generateSimpleResponse(message, language)
       );
     } catch (error) {

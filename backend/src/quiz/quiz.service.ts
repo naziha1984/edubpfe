@@ -14,12 +14,17 @@ import { Progress, ProgressDocument } from './schemas/progress.schema';
 import {
   QuizQuestion,
   QuizQuestionDocument,
+  QuizDifficulty,
 } from './schemas/quiz-question.schema';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/schemas/notification.schema';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { SubmitQuizDto } from './dto/submit-quiz.dto';
+import { CreateQuizQuestionDto } from './dto/create-quiz-question.dto';
 import { LessonsService } from '../subjects/lessons.service';
 import { SubjectsService } from '../subjects/subjects.service';
 import { RewardsService } from '../rewards/rewards.service';
+import { UserRole } from '../users/schemas/user.schema';
 
 @Injectable()
 export class QuizService {
@@ -33,6 +38,7 @@ export class QuizService {
     private lessonsService: LessonsService,
     private subjectsService: SubjectsService,
     private rewardsService: RewardsService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async createSession(
@@ -77,6 +83,7 @@ export class QuizService {
       kidId: new Types.ObjectId(kidIdFromToken),
       lessonId: new Types.ObjectId(createSessionDto.lessonId),
       status: 'in_progress',
+      difficultyFilter: createSessionDto.difficulty,
     });
 
     return session.save();
@@ -110,17 +117,23 @@ export class QuizService {
       throw new BadRequestException('Quiz session already completed');
     }
 
-    // Get questions for the lesson
+    const qFilter: Record<string, unknown> = {
+      lessonId: session.lessonId,
+      isActive: true,
+    };
+    if (session.difficultyFilter) {
+      qFilter.difficulty = session.difficultyFilter;
+    }
+
     const questions = await this.quizQuestionModel
-      .find({
-        lessonId: session.lessonId,
-        isActive: true,
-      })
+      .find(qFilter)
       .sort({ createdAt: 1 })
       .exec();
 
     if (questions.length === 0) {
-      throw new NotFoundException('No questions found for this lesson');
+      throw new BadRequestException(
+        'This lesson has no quiz questions yet. Add questions in the database or use a lesson that includes a quiz.',
+      );
     }
 
     // Calculate score
@@ -182,12 +195,86 @@ export class QuizService {
       totalQuestions,
     );
 
+    await this.notificationsService.notifyParentOfKid(
+      kidIdFromToken,
+      NotificationType.CHILD_PROGRESS,
+      'Quiz completed',
+      `Your child completed a quiz: ${score}/${totalQuestions} (${percentage}%).`,
+      {
+        relatedId: session._id.toString(),
+        relatedType: 'quiz_session',
+      },
+    );
+
+    if (totalXP > 0) {
+      await this.notificationsService.notifyParentOfKid(
+        kidIdFromToken,
+        NotificationType.REWARD_EARNED,
+        'Points earned',
+        `+${totalXP} XP for this quiz!`,
+        {
+          relatedId: session._id.toString(),
+          relatedType: 'quiz_session',
+        },
+      );
+    }
+
     return {
       score,
       totalQuestions,
       percentage,
       xpEarned: totalXP,
     };
+  }
+
+  async getQuestionsForQuizSession(
+    sessionId: string,
+    kidIdFromToken: string,
+  ) {
+    const session = await this.quizSessionModel.findById(sessionId).exec();
+    if (!session) {
+      throw new NotFoundException('Quiz session not found');
+    }
+    if (session.kidId.toString() !== kidIdFromToken) {
+      throw new ForbiddenException('You can only load your own quiz session');
+    }
+    return this.getQuestionsForLesson(
+      session.lessonId.toString(),
+      session.difficultyFilter,
+    );
+  }
+
+  /** Questions shown to the kid (no correct answer). Order matches scoring in submitQuiz. */
+  async getQuestionsForLesson(
+    lessonId: string,
+    difficulty?: QuizDifficulty,
+  ) {
+    const lesson = await this.lessonsService.findOne(lessonId);
+    if (!lesson) {
+      throw new NotFoundException('Lesson not found');
+    }
+
+    const filter: Record<string, unknown> = {
+      lessonId: new Types.ObjectId(lessonId),
+      isActive: true,
+    };
+    if (difficulty) {
+      filter.difficulty = difficulty;
+    }
+
+    const questions = await this.quizQuestionModel
+      .find(filter)
+      .sort({ createdAt: 1 })
+      .select('question options difficulty')
+      .lean()
+      .exec();
+
+    return questions.map((q, index) => ({
+      questionIndex: index,
+      question: q.question,
+      options: q.options,
+      difficulty: q.difficulty,
+    }));
   }
 
   async getSessionById(sessionId: string, kidIdFromToken: string) {
@@ -202,5 +289,92 @@ export class QuizService {
     }
 
     return session;
+  }
+
+  private assertLessonEditAccess(
+    lesson: { teacherId?: Types.ObjectId },
+    userId: string,
+    role: string,
+  ) {
+    if (role === UserRole.ADMIN) return;
+    if (lesson.teacherId?.toString() === userId) return;
+    throw new ForbiddenException(
+      'You can only manage quiz questions for your own lessons',
+    );
+  }
+
+  private mapQuestionAdmin(q: QuizQuestionDocument) {
+    return {
+      id: q._id.toString(),
+      lessonId: q.lessonId.toString(),
+      subjectId: q.subjectId?.toString(),
+      question: q.question,
+      options: q.options,
+      correctAnswer: q.correctAnswer,
+      difficulty: q.difficulty,
+      explanation: q.explanation,
+      isActive: q.isActive,
+      createdAt: q.createdAt,
+      updatedAt: q.updatedAt,
+    };
+  }
+
+  async createTeacherQuizQuestion(
+    lessonId: string,
+    dto: CreateQuizQuestionDto,
+    userId: string,
+    role: string,
+  ) {
+    const lesson = await this.lessonsService.findOne(lessonId);
+    if (!lesson) {
+      throw new NotFoundException('Lesson not found');
+    }
+    this.assertLessonEditAccess(lesson, userId, role);
+    if (dto.correctAnswer >= dto.options.length) {
+      throw new BadRequestException(
+        'correctAnswer must be a valid index in options',
+      );
+    }
+    const doc = await this.quizQuestionModel.create({
+      lessonId: new Types.ObjectId(lessonId),
+      subjectId: lesson.subjectId,
+      question: dto.question,
+      options: dto.options,
+      correctAnswer: dto.correctAnswer,
+      difficulty: dto.difficulty ?? QuizDifficulty.MEDIUM,
+      explanation: dto.explanation,
+      isActive: true,
+    });
+    return this.mapQuestionAdmin(doc);
+  }
+
+  async listTeacherQuestionsForLesson(
+    lessonId: string,
+    userId: string,
+    role: string,
+  ) {
+    const lesson = await this.lessonsService.findOne(lessonId);
+    if (!lesson) {
+      throw new NotFoundException('Lesson not found');
+    }
+    this.assertLessonEditAccess(lesson, userId, role);
+    const qs = await this.quizQuestionModel
+      .find({ lessonId: new Types.ObjectId(lessonId) })
+      .sort({ createdAt: 1 })
+      .exec();
+    return qs.map((q) => this.mapQuestionAdmin(q));
+  }
+
+  async deleteTeacherQuestion(questionId: string, userId: string, role: string) {
+    const q = await this.quizQuestionModel.findById(questionId);
+    if (!q) {
+      throw new NotFoundException('Question not found');
+    }
+    const lesson = await this.lessonsService.findOne(q.lessonId.toString());
+    if (!lesson) {
+      throw new NotFoundException('Lesson not found');
+    }
+    this.assertLessonEditAccess(lesson, userId, role);
+    await this.quizQuestionModel.findByIdAndDelete(questionId);
   }
 }

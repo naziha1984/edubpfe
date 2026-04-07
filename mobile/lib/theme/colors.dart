@@ -48,9 +48,15 @@ class EduBridgeColors {
   );
 
   static const LinearGradient backgroundGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Color(0xFFF0F9FF), Color(0xFFE0E7FF)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFFEEF2FF),
+      Color(0xFFF8FAFC),
+      Color(0xFFE0F2FE),
+      Color(0xFFF1F5F9),
+    ],
+    stops: [0.0, 0.32, 0.68, 1.0],
   );
 
   // Glass Effect Colors

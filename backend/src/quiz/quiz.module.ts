@@ -13,6 +13,8 @@ import {
 import { SubjectsModule } from '../subjects/subjects.module';
 import { KidsModule } from '../kids/kids.module';
 import { RewardsModule } from '../rewards/rewards.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { ClassesModule } from '../classes/classes.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { RewardsModule } from '../rewards/rewards.module';
     SubjectsModule,
     KidsModule,
     RewardsModule,
+    NotificationsModule,
+    ClassesModule,
   ],
   controllers: [QuizController, ProgressController],
   providers: [QuizService, ProgressService],

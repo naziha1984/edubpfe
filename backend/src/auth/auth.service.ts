@@ -16,8 +16,13 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
+  private normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
+  }
+
   async register(registerDto: RegisterDto) {
-    const existingUser = await this.usersService.findByEmail(registerDto.email);
+    const normalizedEmail = this.normalizeEmail(registerDto.email);
+    const existingUser = await this.usersService.findByEmail(normalizedEmail);
     if (existingUser) {
       throw new ConflictException('Email already exists');
     }
@@ -27,7 +32,7 @@ export class AuthService {
         ? UserRole.TEACHER
         : UserRole.PARENT;
     const user = await this.usersService.create(
-      registerDto.email,
+      normalizedEmail,
       registerDto.password,
       registerDto.firstName,
       registerDto.lastName,
@@ -53,7 +58,8 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const user = await this.usersService.findByEmail(loginDto.email);
+    const normalizedEmail = this.normalizeEmail(loginDto.email);
+    const user = await this.usersService.findByEmail(normalizedEmail);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -69,6 +75,14 @@ export class AuthService {
 
     if (!user.isActive) {
       throw new UnauthorizedException('Account is inactive');
+    }
+
+    // Migrer les anciens mots de passe en clair vers bcrypt au prochain login réussi
+    if (!this.usersService.isBcryptHash(user.password)) {
+      await this.usersService.upgradePasswordToBcrypt(
+        user._id.toString(),
+        loginDto.password,
+      );
     }
 
     const payload = {

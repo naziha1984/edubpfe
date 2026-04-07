@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../theme/colors.dart';
 import '../theme/typography.dart';
+import '../ui/components/gradient_page_shell.dart';
 import '../components/gradient_button.dart';
 import '../components/glass_card.dart';
 import '../components/loading.dart';
@@ -17,6 +18,7 @@ import '../utils/app_router.dart';
 import 'add_kid_page.dart';
 import 'set_pin_page.dart';
 import 'verify_pin_page.dart';
+import 'notifications_screen.dart';
 
 class KidsListPage extends StatefulWidget {
   const KidsListPage({super.key});
@@ -27,6 +29,90 @@ class KidsListPage extends StatefulWidget {
 
 class _KidsListPageState extends State<KidsListPage> {
   String? _selectedLanguage;
+
+  Future<void> _logout() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    authProvider.logout();
+    if (!mounted) return;
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/',
+      (route) => false,
+    );
+  }
+
+  Future<void> _showProfileSheet() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
+    if (user == null) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 24,
+                      backgroundColor: EduBridgeColors.primary.withOpacity(0.15),
+                      child: Icon(
+                        Icons.person,
+                        color: EduBridgeColors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user.fullName,
+                            style: EduBridgeTypography.titleMedium.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            user.email,
+                            style: EduBridgeTypography.bodySmall.copyWith(
+                              color: EduBridgeColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'Rôle : ${user.role}',
+                  style: EduBridgeTypography.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _logout();
+                    },
+                    icon: const Icon(Icons.logout),
+                    label: const Text('Se déconnecter'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   void initState() {
@@ -103,10 +189,8 @@ class _KidsListPageState extends State<KidsListPage> {
     return Directionality(
       textDirection: RTLSupport.getTextDirection(_selectedLanguage),
       child: Scaffold(
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: EduBridgeColors.backgroundGradient,
-          ),
+        backgroundColor: Colors.transparent,
+        body: GradientPageShell(
           child: SafeArea(
             child: Column(
               children: [
@@ -125,6 +209,19 @@ class _KidsListPageState extends State<KidsListPage> {
                       ),
                       Row(
                         children: [
+                          IconButton(
+                            tooltip: 'Notifications',
+                            icon: const Icon(Icons.notifications_outlined),
+                            color: EduBridgeColors.textPrimary,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const NotificationsScreen(),
+                                ),
+                              );
+                            },
+                          ),
                           // Language selector
                           DropdownButton<String>(
                             value: _selectedLanguage,
@@ -140,16 +237,46 @@ class _KidsListPageState extends State<KidsListPage> {
                               });
                             },
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.logout),
-                            onPressed: () {
-                              authProvider.logout();
-                              Navigator.pushNamedAndRemoveUntil(
-                                context,
-                                '/',
-                                (route) => false,
-                              );
+                          PopupMenuButton<String>(
+                            tooltip: 'Profil',
+                            onSelected: (value) {
+                              if (value == 'profile') {
+                                _showProfileSheet();
+                              } else if (value == 'logout') {
+                                _logout();
+                              }
                             },
+                            itemBuilder: (context) => const [
+                              PopupMenuItem<String>(
+                                value: 'profile',
+                                child: ListTile(
+                                  leading: Icon(Icons.person_outline),
+                                  title: Text('Voir profil'),
+                                  dense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                              PopupMenuItem<String>(
+                                value: 'logout',
+                                child: ListTile(
+                                  leading: Icon(Icons.logout),
+                                  title: Text('Se déconnecter'),
+                                  dense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                            ],
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.75),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: EduBridgeColors.primary.withOpacity(0.2),
+                                ),
+                              ),
+                              child: const Icon(Icons.person, size: 20),
+                            ),
                           ),
                         ],
                       ),

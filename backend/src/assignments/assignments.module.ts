@@ -12,6 +12,7 @@ import {
   AssignmentSubmissionSchema,
 } from './schemas/assignment-submission.schema';
 import { ClassesModule } from '../classes/classes.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { ClassesModule } from '../classes/classes.module';
       { name: AssignmentSubmission.name, schema: AssignmentSubmissionSchema },
     ]),
     ClassesModule,
+    NotificationsModule,
   ],
   controllers: [AssignmentsController, KidAssignmentsController],
   providers: [AssignmentsService],

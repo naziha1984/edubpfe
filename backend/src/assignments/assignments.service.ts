@@ -19,6 +19,8 @@ import { CreateAssignmentDto } from './dto/create-assignment.dto';
 import { ClassesService } from '../classes/classes.service';
 import { ASSIGNMENTS_UPLOAD_SUBDIR } from './assignment-upload.config';
 import { mapAssignmentAttachment } from './assignment-response.util';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/schemas/notification.schema';
 
 @Injectable()
 export class AssignmentsService {
@@ -28,6 +30,7 @@ export class AssignmentsService {
     @InjectModel(AssignmentSubmission.name)
     private submissionModel: Model<AssignmentSubmissionDocument>,
     private classesService: ClassesService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async createAssignment(
@@ -79,6 +82,17 @@ export class AssignmentsService {
         status: SubmissionStatus.ASSIGNED,
       });
     }
+
+    await this.notificationsService.notifyParentsInClass(
+      createAssignmentDto.classId,
+      NotificationType.ASSIGNMENT_CREATED,
+      'New assignment',
+      `A new assignment "${savedAssignment.title}" was posted for your child’s class.`,
+      {
+        relatedId: savedAssignment._id.toString(),
+        relatedType: 'assignment',
+      },
+    );
 
     return savedAssignment;
   }
@@ -294,6 +308,19 @@ export class AssignmentsService {
     }
 
     await submission.save();
+
+    await this.notificationsService.createForUser(
+      assignment.teacherId.toString(),
+      NotificationType.ASSIGNMENT_SUBMITTED,
+      'Assignment submitted',
+      'A student submitted their work for your assignment.',
+      {
+        kidId,
+        relatedId: assignment._id.toString(),
+        relatedType: 'assignment',
+      },
+    );
+
     return submission;
   }
 }

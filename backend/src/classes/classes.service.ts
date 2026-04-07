@@ -141,7 +141,7 @@ export class ClassesService {
 
     return this.classMembershipModel
       .find({ classId: new Types.ObjectId(classId), isActive: true })
-      .populate('kidId', 'firstName lastName')
+      .populate('kidId', 'firstName lastName parentId')
       .exec();
   }
 

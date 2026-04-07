@@ -66,9 +66,11 @@ class EduBridgeTheme {
         ),
       ),
 
-      // Card Theme
+      // Card Theme — surface élevée, ombre portée douce
       cardTheme: CardThemeData(
-        elevation: elevation0,
+        elevation: elevation2,
+        shadowColor: Colors.black.withOpacity(0.08),
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusLG),
         ),
@@ -312,9 +314,255 @@ class EduBridgeTheme {
     );
   }
 
-  /// Thème sombre (pour le futur)
+  /// Thème sombre — ardoise profonde, pas de noir pur.
   static ThemeData get darkTheme {
-    // TODO: Implémenter le thème sombre
-    return lightTheme;
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: EduBridgeColors.primaryLight,
+      brightness: Brightness.dark,
+      primary: EduBridgeColors.primaryLight,
+      onPrimary: Colors.white,
+      secondary: EduBridgeColors.secondaryLight,
+      onSecondary: Colors.white,
+      surface: EduBridgeColors.darkSurface,
+      error: EduBridgeColors.errorLight,
+      onError: Colors.white,
+      onSurface: EduBridgeColors.darkTextPrimary,
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: colorScheme,
+      scaffoldBackgroundColor: EduBridgeColors.darkBackground,
+      appBarTheme: AppBarTheme(
+        elevation: elevation0,
+        centerTitle: false,
+        backgroundColor: Colors.transparent,
+        foregroundColor: EduBridgeColors.darkTextPrimary,
+        titleTextStyle: EduBridgeTypography.headlineSmall.copyWith(
+          color: EduBridgeColors.darkTextPrimary,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      cardTheme: CardThemeData(
+        elevation: elevation2,
+        shadowColor: Colors.black.withOpacity(0.45),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusLG),
+        ),
+        color: EduBridgeColors.darkSurface,
+        margin: EdgeInsets.zero,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: EduBridgeColors.darkSurfaceVariant,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: spacingMD,
+          vertical: spacingMD,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMD),
+          borderSide: BorderSide(
+            color: EduBridgeColors.darkTextTertiary.withOpacity(0.35),
+            width: 1.5,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMD),
+          borderSide: BorderSide(
+            color: EduBridgeColors.darkTextTertiary.withOpacity(0.35),
+            width: 1.5,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMD),
+          borderSide: const BorderSide(
+            color: EduBridgeColors.primaryLight,
+            width: 2.0,
+          ),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMD),
+          borderSide: const BorderSide(
+            color: EduBridgeColors.errorLight,
+            width: 1.5,
+          ),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMD),
+          borderSide: const BorderSide(
+            color: EduBridgeColors.errorLight,
+            width: 2.0,
+          ),
+        ),
+        labelStyle: EduBridgeTypography.bodyMedium.copyWith(
+          color: EduBridgeColors.darkTextSecondary,
+        ),
+        hintStyle: EduBridgeTypography.bodyMedium.copyWith(
+          color: EduBridgeColors.darkTextTertiary,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          elevation: elevation0,
+          padding: const EdgeInsets.symmetric(
+            horizontal: spacingLG,
+            vertical: spacingMD,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusMD),
+          ),
+          backgroundColor: EduBridgeColors.primaryLight,
+          foregroundColor: Colors.white,
+          textStyle: EduBridgeTypography.labelLarge.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(
+            horizontal: spacingMD,
+            vertical: spacingSM,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusMD),
+          ),
+          foregroundColor: EduBridgeColors.primaryLight,
+          textStyle: EduBridgeTypography.labelLarge.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(
+            horizontal: spacingLG,
+            vertical: spacingMD,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusMD),
+          ),
+          side: const BorderSide(
+            color: EduBridgeColors.primaryLight,
+            width: 1.5,
+          ),
+          foregroundColor: EduBridgeColors.primaryLight,
+          textStyle: EduBridgeTypography.labelLarge.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        elevation: elevation3,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusXL),
+        ),
+        backgroundColor: EduBridgeColors.primaryLight,
+        foregroundColor: Colors.white,
+      ),
+      textTheme: TextTheme(
+        displayLarge: EduBridgeTypography.displayLarge.copyWith(
+          color: EduBridgeColors.darkTextPrimary,
+        ),
+        displayMedium: EduBridgeTypography.displayMedium.copyWith(
+          color: EduBridgeColors.darkTextPrimary,
+        ),
+        displaySmall: EduBridgeTypography.displaySmall.copyWith(
+          color: EduBridgeColors.darkTextPrimary,
+        ),
+        headlineLarge: EduBridgeTypography.headlineLarge.copyWith(
+          color: EduBridgeColors.darkTextPrimary,
+        ),
+        headlineMedium: EduBridgeTypography.headlineMedium.copyWith(
+          color: EduBridgeColors.darkTextPrimary,
+        ),
+        headlineSmall: EduBridgeTypography.headlineSmall.copyWith(
+          color: EduBridgeColors.darkTextPrimary,
+        ),
+        titleLarge: EduBridgeTypography.titleLarge.copyWith(
+          color: EduBridgeColors.darkTextPrimary,
+        ),
+        titleMedium: EduBridgeTypography.titleMedium.copyWith(
+          color: EduBridgeColors.darkTextPrimary,
+        ),
+        titleSmall: EduBridgeTypography.titleSmall.copyWith(
+          color: EduBridgeColors.darkTextPrimary,
+        ),
+        bodyLarge: EduBridgeTypography.bodyLarge.copyWith(
+          color: EduBridgeColors.darkTextPrimary,
+        ),
+        bodyMedium: EduBridgeTypography.bodyMedium.copyWith(
+          color: EduBridgeColors.darkTextSecondary,
+        ),
+        bodySmall: EduBridgeTypography.bodySmall.copyWith(
+          color: EduBridgeColors.darkTextSecondary,
+        ),
+        labelLarge: EduBridgeTypography.labelLarge.copyWith(
+          color: EduBridgeColors.darkTextPrimary,
+        ),
+        labelMedium: EduBridgeTypography.labelMedium.copyWith(
+          color: EduBridgeColors.darkTextSecondary,
+        ),
+        labelSmall: EduBridgeTypography.labelSmall.copyWith(
+          color: EduBridgeColors.darkTextTertiary,
+        ),
+      ),
+      iconTheme: IconThemeData(
+        color: EduBridgeColors.darkTextPrimary,
+        size: 24,
+      ),
+      dividerTheme: DividerThemeData(
+        color: EduBridgeColors.darkTextTertiary.withOpacity(0.25),
+        thickness: 1,
+        space: 1,
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: EduBridgeColors.darkSurfaceVariant,
+        labelStyle: EduBridgeTypography.labelMedium.copyWith(
+          color: EduBridgeColors.darkTextPrimary,
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: spacingSM,
+          vertical: spacingXS,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusFull),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: EduBridgeColors.darkSurfaceVariant,
+        contentTextStyle: EduBridgeTypography.bodyMedium.copyWith(
+          color: EduBridgeColors.darkTextPrimary,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusMD),
+        ),
+        behavior: SnackBarBehavior.floating,
+        elevation: elevation3,
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: EduBridgeColors.darkSurface,
+        elevation: elevation4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusXL),
+        ),
+        titleTextStyle: EduBridgeTypography.headlineSmall.copyWith(
+          color: EduBridgeColors.darkTextPrimary,
+        ),
+        contentTextStyle: EduBridgeTypography.bodyMedium.copyWith(
+          color: EduBridgeColors.darkTextSecondary,
+        ),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: EduBridgeColors.darkSurface,
+        elevation: elevation4,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(radiusXL),
+          ),
+        ),
+      ),
+    );
   }
 }

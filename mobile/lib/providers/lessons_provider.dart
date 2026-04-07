@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:file_picker/file_picker.dart';
 import '../models/lesson_model.dart';
 import '../services/api_service.dart';
 import '../services/lessons_service.dart';
@@ -55,13 +56,19 @@ class LessonsProvider with ChangeNotifier {
   }
 
   /// Crée une nouvelle lesson
-  Future<LessonModel> createLesson(LessonModel lesson) async {
+  Future<LessonModel> createLesson(
+    LessonModel lesson, {
+    List<PlatformFile> files = const [],
+  }) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final data = await _lessonsService.createLesson(lesson.toJson());
+      final data = await _lessonsService.createLesson(
+        lesson.toJson(),
+        files,
+      );
       final newLesson = LessonModel.fromJson(data);
       
       _lessons.add(newLesson);
@@ -85,7 +92,10 @@ class LessonsProvider with ChangeNotifier {
   }
 
   /// Met à jour une lesson
-  Future<LessonModel> updateLesson(LessonModel lesson) async {
+  Future<LessonModel> updateLesson(
+    LessonModel lesson, {
+    List<PlatformFile> files = const [],
+  }) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -94,6 +104,7 @@ class LessonsProvider with ChangeNotifier {
       final data = await _lessonsService.updateLesson(
         lesson.id,
         lesson.toJsonForUpdate(),
+        files,
       );
       final updatedLesson = LessonModel.fromJson(data);
       

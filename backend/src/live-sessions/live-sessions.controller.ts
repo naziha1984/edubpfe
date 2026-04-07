@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Param,
   Body,
   UseGuards,
@@ -75,5 +76,25 @@ export class LiveSessionsController {
       createdAt: session.createdAt,
       updatedAt: session.updatedAt,
     }));
+  }
+
+  @Patch(':classId/live-sessions/:sessionId/go-live')
+  @HttpCode(HttpStatus.OK)
+  async goLive(
+    @Param('classId') classId: string,
+    @Param('sessionId') sessionId: string,
+    @GetUser() user: any,
+  ) {
+    const session = await this.liveSessionsService.markSessionLive(
+      classId,
+      sessionId,
+      user.id,
+    );
+    return {
+      id: session._id.toString(),
+      classId: session.classId.toString(),
+      status: session.status,
+      meetingUrl: session.meetingUrl,
+    };
   }
 }

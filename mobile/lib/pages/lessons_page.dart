@@ -92,8 +92,9 @@ class _LessonsPageState extends State<LessonsPage> {
                     : quizProvider.lessons.isEmpty
                         ? const EmptyState(
                             icon: Icons.menu_book_outlined,
-                            title: 'No Lessons',
-                            message: 'No lessons available for this subject',
+                            title: 'Aucune leçon',
+                            message:
+                                'Ajoute des leçons pour cette matière avec un compte enseignant ou administrateur.',
                           )
                         : RefreshIndicator(
                             onRefresh: _loadLessons,
@@ -106,14 +107,28 @@ class _LessonsPageState extends State<LessonsPage> {
                                   margin: const EdgeInsets.only(bottom: 16),
                                   padding: const EdgeInsets.all(20),
                                   onTap: () {
+                                    final lid = lesson['id']?.toString();
+                                    final ltitle =
+                                        lesson['title']?.toString() ?? 'Leçon';
+                                    if (lid == null || lid.isEmpty) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Leçon invalide (identifiant manquant)',
+                                          ),
+                                        ),
+                                      );
+                                      return;
+                                    }
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => QuizPage(
                                           kidId: widget.kidId,
                                           kidName: widget.kidName,
-                                          lessonId: lesson['id'],
-                                          lessonName: lesson['title'],
+                                          lessonId: lid,
+                                          lessonName: ltitle,
                                         ),
                                       ),
                                     );

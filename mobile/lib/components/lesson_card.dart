@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/lesson_model.dart';
 import '../ui/theme/edubridge_colors.dart';
 import '../ui/theme/edubridge_typography.dart';
 import '../ui/theme/edubridge_theme.dart';
 import '../ui/components/glass_card.dart';
+import '../utils/upload_url.dart';
 
 /// Card de lesson avec animations Hero
 class LessonCard extends StatefulWidget {
@@ -81,6 +83,22 @@ class _LessonCardState extends State<LessonCard>
     if (widget.onTap != null) {
       setState(() => _isPressed = false);
     }
+  }
+
+  IconData _iconForMime(String mime) {
+    final m = mime.toLowerCase();
+    if (m.contains('pdf')) return Icons.picture_as_pdf;
+    if (m.contains('word') || m.contains('officedocument.wordprocessingml')) {
+      return Icons.description;
+    }
+    if (m.startsWith('image/')) return Icons.image;
+    if (m.startsWith('video/')) return Icons.videocam;
+    return Icons.attach_file;
+  }
+
+  Future<void> _openAttachment(String url) async {
+    final uri = Uri.parse(absoluteUploadUrl(url));
+    await launchUrl(uri, mode: LaunchMode.platformDefault);
   }
 
   @override
@@ -293,6 +311,24 @@ class _LessonCardState extends State<LessonCard>
                         ),
                       ],
                     ),
+                  ),
+                ],
+                if (widget.lesson.attachments.isNotEmpty) ...[
+                  const SizedBox(height: EduBridgeTheme.spacingSM),
+                  Wrap(
+                    spacing: EduBridgeTheme.spacingXS,
+                    runSpacing: EduBridgeTheme.spacingXS,
+                    children: widget.lesson.attachments.map((a) {
+                      return ActionChip(
+                        avatar: Icon(_iconForMime(a.mimeType), size: 16),
+                        label: Text(
+                          a.originalName.isEmpty ? 'Fichier' : a.originalName,
+                        ),
+                        onPressed: a.url.isEmpty
+                            ? null
+                            : () => _openAttachment(a.url),
+                      );
+                    }).toList(),
                   ),
                 ],
                 // Actions

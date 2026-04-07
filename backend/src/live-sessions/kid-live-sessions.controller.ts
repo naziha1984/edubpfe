@@ -1,5 +1,6 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { LiveSessionsService } from './live-sessions.service';
+import { LiveSessionStatus } from './schemas/live-session.schema';
 import { KidAuthGuard } from '../kids/guards/kid-auth.guard';
 import { GetKid } from '../kids/decorators/get-kid.decorator';
 
@@ -27,8 +28,10 @@ export class KidLiveSessionsController {
       title: session.title,
       description: session.description,
       scheduledAt: session.scheduledAt,
-      meetingUrl: session.meetingUrl,
+      meetingUrl:
+        session.status === LiveSessionStatus.LIVE ? session.meetingUrl : null,
       status: session.status,
+      canJoin: session.status === LiveSessionStatus.LIVE,
       isActive: session.isActive,
       createdAt: session.createdAt,
       updatedAt: session.updatedAt,

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'api_service.dart';
 
@@ -20,6 +21,13 @@ class LessonsService {
     }
 
     return headers;
+  }
+
+  Future<Map<String, dynamic>> _handleMultipartResponse(
+    http.StreamedResponse streamed,
+  ) async {
+    final response = await http.Response.fromStream(streamed);
+    return await _handleResponse(response) as Map<String, dynamic>;
   }
 
   /// Gère la réponse de l'API
@@ -79,28 +87,96 @@ class LessonsService {
   }
 
   /// POST /lessons - Crée une nouvelle lesson (admin)
-  Future<Map<String, dynamic>> createLesson(Map<String, dynamic> data) async {
-    final response = await http.post(
-      Uri.parse('${ApiService.baseUrl}/lessons'),
-      headers: _getHeaders(),
-      body: json.encode(data),
-    );
+  Future<Map<String, dynamic>> createLesson(
+    Map<String, dynamic> data,
+    List<PlatformFile> files,
+  ) async {
+    final uri = Uri.parse('${ApiService.baseUrl}/lessons');
+    final request = http.MultipartRequest('POST', uri);
+    final token = _apiService.token;
+    if (token != null) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+    request.fields['subjectId'] = data['subjectId'].toString();
+    request.fields['title'] = data['title'].toString();
+    if (data['description'] != null) {
+      request.fields['description'] = data['description'].toString();
+    }
+    if (data['content'] != null) {
+      request.fields['content'] = data['content'].toString();
+    }
+    if (data['order'] != null) {
+      request.fields['order'] = data['order'].toString();
+    }
+    if (data['level'] != null) {
+      request.fields['level'] = data['level'].toString();
+    }
+    if (data['language'] != null) {
+      request.fields['language'] = data['language'].toString();
+    }
+    request.fields['isActive'] = (data['isActive'] ?? true).toString();
 
-    return await _handleResponse(response) as Map<String, dynamic>;
+    for (final f in files) {
+      if (f.bytes != null) {
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'files',
+            f.bytes!,
+            filename: f.name.isNotEmpty ? f.name : 'fichier',
+          ),
+        );
+      } else if (f.path != null && f.path!.isNotEmpty) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'files',
+            f.path!,
+            filename: f.name.isNotEmpty ? f.name : f.path!.split('/').last,
+          ),
+        );
+      }
+    }
+
+    return _handleMultipartResponse(await request.send());
   }
 
   /// PUT /lessons/:id - Met à jour une lesson (admin)
   Future<Map<String, dynamic>> updateLesson(
     String id,
     Map<String, dynamic> data,
+    List<PlatformFile> files,
   ) async {
-    final response = await http.put(
-      Uri.parse('${ApiService.baseUrl}/lessons/$id'),
-      headers: _getHeaders(),
-      body: json.encode(data),
-    );
+    final uri = Uri.parse('${ApiService.baseUrl}/lessons/$id');
+    final request = http.MultipartRequest('PUT', uri);
+    final token = _apiService.token;
+    if (token != null) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+    for (final entry in data.entries) {
+      if (entry.value != null) {
+        request.fields[entry.key] = entry.value.toString();
+      }
+    }
+    for (final f in files) {
+      if (f.bytes != null) {
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'files',
+            f.bytes!,
+            filename: f.name.isNotEmpty ? f.name : 'fichier',
+          ),
+        );
+      } else if (f.path != null && f.path!.isNotEmpty) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'files',
+            f.path!,
+            filename: f.name.isNotEmpty ? f.name : f.path!.split('/').last,
+          ),
+        );
+      }
+    }
 
-    return await _handleResponse(response) as Map<String, dynamic>;
+    return _handleMultipartResponse(await request.send());
   }
 
   /// DELETE /lessons/:id - Supprime une lesson (admin)

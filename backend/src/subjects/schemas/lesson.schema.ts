@@ -8,9 +8,38 @@ export type LessonDocument = Lesson &
   };
 
 @Schema({ timestamps: true })
+export class LessonAttachment {
+  @Prop({ required: true })
+  originalName: string;
+
+  @Prop({ required: true })
+  storedName: string;
+
+  @Prop({ required: true })
+  mimeType: string;
+
+  @Prop({ required: true })
+  size: number;
+
+  @Prop({ required: true })
+  urlPath: string;
+}
+
+export const LessonAttachmentSchema =
+  SchemaFactory.createForClass(LessonAttachment);
+
+@Schema({ timestamps: true })
 export class Lesson {
   @Prop({ required: true, type: Types.ObjectId, ref: 'Subject' })
   subjectId: Types.ObjectId;
+
+  /** Enseignant créateur (JWT admin / teacher). */
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  teacherId?: Types.ObjectId;
+
+  /** Optionnel : leçon rattachée à une classe (Tunisie / suivi par groupe). */
+  @Prop({ type: Types.ObjectId, ref: 'Class' })
+  classId?: Types.ObjectId;
 
   @Prop({ required: true })
   title: string;
@@ -32,9 +61,12 @@ export class Lesson {
 
   @Prop({ default: true })
   isActive: boolean;
+
+  @Prop({ type: [LessonAttachmentSchema], default: [] })
+  attachments: LessonAttachment[];
 }
 
 export const LessonSchema = SchemaFactory.createForClass(Lesson);
 
-// 确保同一科目内标题唯一（复合唯一索引）
-LessonSchema.index({ subjectId: 1, title: 1 }, { unique: true });
+// Unicité par matière + classe (nullable) + titre
+LessonSchema.index({ subjectId: 1, classId: 1, title: 1 }, { unique: true });

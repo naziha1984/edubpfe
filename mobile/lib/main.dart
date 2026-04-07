@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'ui/theme/edubridge_theme.dart';
+import 'providers/app_settings_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/kids_provider.dart';
 import 'providers/quiz_provider.dart';
@@ -16,6 +18,8 @@ import 'utils/app_router.dart';
 import 'components/loading.dart';
 import 'components/chatbot_floating_button.dart';
 
+final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
+
 void main() {
   runApp(const EduBridgeApp());
 }
@@ -29,6 +33,13 @@ class EduBridgeApp extends StatelessWidget {
     final apiService = ApiService();
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider<AppSettingsProvider>(
+          create: (_) {
+            final s = AppSettingsProvider();
+            s.load();
+            return s;
+          },
+        ),
         Provider<ApiService>.value(value: apiService),
         ChangeNotifierProvider(create: (_) => AuthProvider(apiService)),
         ChangeNotifierProvider(create: (_) => KidsProvider(apiService)),
@@ -52,9 +63,15 @@ class EduBridgeApp extends StatelessWidget {
           create: (_) => LiveSessionsProvider(apiService),
         ),
       ],
-      child: MaterialApp(
+      child: Consumer<AppSettingsProvider>(
+        builder: (context, appSettings, _) {
+          return MaterialApp(
+        navigatorKey: appNavigatorKey,
         title: 'EduBridge',
         theme: EduBridgeTheme.lightTheme,
+        darkTheme: EduBridgeTheme.darkTheme,
+        themeMode: appSettings.themeMode,
+        locale: appSettings.locale,
         debugShowCheckedModeBanner: false,
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
@@ -62,8 +79,9 @@ class EduBridgeApp extends StatelessWidget {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [
-          Locale('en', 'US'),
-          Locale('fr', 'FR'),
+          Locale('en'),
+          Locale('fr'),
+          Locale('ar'),
         ],
         home: const HomePage(),
         // Transitions globales personnalisées
@@ -73,15 +91,59 @@ class EduBridgeApp extends StatelessWidget {
         },
         // Utiliser les transitions par défaut pour toutes les navigations
         builder: (context, child) {
-          final c = child ?? const SizedBox.shrink();
-          return Stack(
-            children: [
-              c,
-              const ChatbotFloatingButton(),
-            ],
+          final c = child ?? const SizedBox.expand();
+          return _GlobalChatbotShell(routeChild: c);
+        },
           );
         },
       ),
+    );
+  }
+}
+
+/// Évite sur Flutter Web l’assert `RenderBox was not laid out` lors des
+/// changements de focus de la vue (avant le premier layout complet).
+class _GlobalChatbotShell extends StatefulWidget {
+  const _GlobalChatbotShell({required this.routeChild});
+
+  final Widget routeChild;
+
+  @override
+  State<_GlobalChatbotShell> createState() => _GlobalChatbotShellState();
+}
+
+class _GlobalChatbotShellState extends State<_GlobalChatbotShell> {
+  bool _overlayReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (kIsWeb) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _overlayReady = true);
+      });
+    } else {
+      _overlayReady = true;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Positioned.fill(child: widget.routeChild),
+        if (_overlayReady)
+          const SafeArea(
+            child: Align(
+              alignment: Alignment.bottomRight,
+              child: Padding(
+                padding: EdgeInsets.only(right: 16, bottom: 20),
+                child: ChatbotFloatingButton(),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

@@ -1,4 +1,8 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import {
@@ -8,6 +12,8 @@ import {
 } from './schemas/live-session.schema';
 import { CreateLiveSessionDto } from './dto/create-live-session.dto';
 import { ClassesService } from '../classes/classes.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/schemas/notification.schema';
 
 @Injectable()
 export class LiveSessionsService {
@@ -15,6 +21,7 @@ export class LiveSessionsService {
     @InjectModel(LiveSession.name)
     private liveSessionModel: Model<LiveSessionDocument>,
     private classesService: ClassesService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async createLiveSession(
@@ -40,7 +47,55 @@ export class LiveSessionsService {
       status: LiveSessionStatus.SCHEDULED,
     });
 
-    return liveSession.save();
+    const saved = await liveSession.save();
+
+    await this.notificationsService.notifyParentsInClass(
+      createLiveSessionDto.classId,
+      NotificationType.LIVE_SESSION_SCHEDULED,
+      'Live lesson scheduled',
+      `"${saved.title}" is scheduled. Open the app for details.`,
+      {
+        relatedId: saved._id.toString(),
+        relatedType: 'live_session',
+      },
+    );
+
+    return saved;
+  }
+
+  async markSessionLive(
+    classId: string,
+    sessionId: string,
+    teacherId: string,
+  ): Promise<LiveSessionDocument> {
+    const session = await this.liveSessionModel.findById(sessionId).exec();
+    if (!session || session.classId.toString() !== classId) {
+      throw new NotFoundException('Live session not found');
+    }
+    const isOwner = await this.classesService.checkOwnership(
+      classId,
+      teacherId,
+    );
+    if (!isOwner) {
+      throw new ForbiddenException(
+        'You can only start live sessions for your own classes',
+      );
+    }
+    session.status = LiveSessionStatus.LIVE;
+    await session.save();
+
+    await this.notificationsService.notifyParentsInClass(
+      classId,
+      NotificationType.LIVE_SESSION_STARTED,
+      'Live class now',
+      `"${session.title}" is live — your child can join.`,
+      {
+        relatedId: session._id.toString(),
+        relatedType: 'live_session',
+      },
+    );
+
+    return session;
   }
 
   async getLiveSessionsByClass(

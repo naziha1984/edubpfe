@@ -1,11 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import { ConfigService } from './config/config.service';
 import { LoggerService } from './common/logger/logger.service';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -18,6 +20,8 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors();
+
+  app.useWebSocketAdapter(new IoAdapter(app));
 
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/api/uploads/',
@@ -50,10 +54,29 @@ async function bootstrap() {
   // Global exception filter
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  const port = configService.port;
-  await app.listen(port);
+  const basePort = Number(configService.port) || 3000;
+  let boundPort: number | null = null;
+  const host = '127.0.0.1';
 
-  logger.log(`🚀 EduBridge Backend is running on: http://localhost:${port}`);
+  for (let i = 0; i < 10; i += 1) {
+    const candidate = basePort + i;
+    try {
+      await app.listen(candidate, host);
+      boundPort = candidate;
+      break;
+    } catch (error: any) {
+      if (error?.code === 'EADDRINUSE') {
+        logger.warn(`Port ${candidate} occupé, tentative sur ${candidate + 1}...`);
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  if (boundPort == null) {
+    throw new Error(`Aucun port disponible entre ${basePort} et ${basePort + 9}`);
+  }
+  logger.log(`🚀 EduBridge Backend is running on: http://localhost:${boundPort}`);
   logger.log(`📊 Environment: ${configService.nodeEnv}`);
   logger.log(`🔗 MongoDB URI: ${configService.mongodbUri}`);
 }

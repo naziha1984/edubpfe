@@ -69,16 +69,41 @@ class EduBridgeColors {
     colors: [accent, primary],
   );
 
+  /// Fond app — diagonal doux (indigo / slate / cyan), style produit premium.
   static const LinearGradient backgroundGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
     colors: [
-      Color(0xFFF0F9FF),
-      Color(0xFFE0E7FF),
+      Color(0xFFEEF2FF),
       Color(0xFFF8FAFC),
+      Color(0xFFE0F2FE),
+      Color(0xFFF1F5F9),
     ],
-    stops: [0.0, 0.5, 1.0],
+    stops: [0.0, 0.32, 0.68, 1.0],
   );
+
+  // ——— Dark theme (slate / indigo, pas de noir pur) ———
+  static const Color darkBackground = Color(0xFF0F1218);
+  static const Color darkSurface = Color(0xFF171B24);
+  static const Color darkSurfaceVariant = Color(0xFF222836);
+  static const Color darkTextPrimary = Color(0xFFE8EEF4);
+  static const Color darkTextSecondary = Color(0xFF9BA4B5);
+  static const Color darkTextTertiary = Color(0xFF6B7588);
+
+  static const LinearGradient backgroundGradientDark = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFF121622),
+      Color(0xFF171C28),
+      Color(0xFF141A24),
+      Color(0xFF0F1219),
+    ],
+    stops: [0.0, 0.32, 0.68, 1.0],
+  );
+
+  static const Color glassBackgroundDark = Color(0x14FFFFFF);
+  static const Color glassBorderDark = Color(0x33FFFFFF);
 
   static const LinearGradient surfaceGradient = LinearGradient(
     begin: Alignment.topLeft,
@@ -127,9 +152,86 @@ class EduBridgeColors {
 
   static List<BoxShadow> get shadowPrimary => [
         BoxShadow(
-          color: primary.withOpacity(0.3),
+          color: primary.withOpacity(0.32),
+          blurRadius: 20,
+          spreadRadius: -2,
+          offset: const Offset(0, 10),
+        ),
+        BoxShadow(
+          color: Colors.black.withOpacity(0.06),
           blurRadius: 12,
           offset: const Offset(0, 4),
         ),
       ];
+
+  /// Ombre portée multicouche pour cartes (léger halo teinté + profondeur).
+  static List<BoxShadow> get cardShadowLayered => [
+        BoxShadow(
+          color: primary.withOpacity(0.08),
+          blurRadius: 28,
+          spreadRadius: -6,
+          offset: const Offset(0, 12),
+        ),
+        BoxShadow(
+          color: Colors.black.withOpacity(0.07),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
+        ),
+        BoxShadow(
+          color: Colors.black.withOpacity(0.03),
+          blurRadius: 6,
+          offset: const Offset(0, 2),
+        ),
+      ];
+
+  static List<BoxShadow> cardShadowHover(bool elevated) {
+    if (elevated) {
+      return [
+        BoxShadow(
+          color: primary.withOpacity(0.12),
+          blurRadius: 36,
+          spreadRadius: -4,
+          offset: const Offset(0, 16),
+        ),
+        BoxShadow(
+          color: Colors.black.withOpacity(0.09),
+          blurRadius: 24,
+          offset: const Offset(0, 10),
+        ),
+      ];
+    }
+    return cardShadowLayered;
+  }
+
+  static List<BoxShadow> get cardShadowLayeredDark => [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.55),
+          blurRadius: 28,
+          spreadRadius: -4,
+          offset: const Offset(0, 14),
+        ),
+        BoxShadow(
+          color: primaryLight.withOpacity(0.06),
+          blurRadius: 20,
+          offset: const Offset(0, 6),
+        ),
+      ];
+
+  static List<BoxShadow> cardShadowHoverDark(bool elevated) {
+    if (elevated) {
+      return [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.65),
+          blurRadius: 36,
+          offset: const Offset(0, 16),
+        ),
+        BoxShadow(
+          color: primaryLight.withOpacity(0.1),
+          blurRadius: 24,
+          offset: const Offset(0, 8),
+        ),
+      ];
+    }
+    return cardShadowLayeredDark;
+  }
 }

@@ -516,8 +516,8 @@ class _RegisterPageV2State extends State<RegisterPageV2>
                                   suffixIcon: IconButton(
                                     icon: Icon(
                                       _obscurePassword
-                                          ? Icons.visibility_rounded
-                                          : Icons.visibility_off_rounded,
+                                          ? Icons.visibility_off_rounded
+                                          : Icons.visibility_rounded,
                                       color: EduBridgeColors.textTertiary,
                                     ),
                                     onPressed: () {
@@ -550,8 +550,8 @@ class _RegisterPageV2State extends State<RegisterPageV2>
                                   suffixIcon: IconButton(
                                     icon: Icon(
                                       _obscureConfirmPassword
-                                          ? Icons.visibility_rounded
-                                          : Icons.visibility_off_rounded,
+                                          ? Icons.visibility_off_rounded
+                                          : Icons.visibility_rounded,
                                       color: EduBridgeColors.textTertiary,
                                     ),
                                     onPressed: () {

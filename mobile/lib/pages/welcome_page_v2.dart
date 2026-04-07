@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'package:provider/provider.dart';
 import '../ui/theme/edubridge_colors.dart';
 import '../ui/theme/edubridge_typography.dart';
 import '../ui/theme/edubridge_theme.dart';
 import '../ui/components/gradient_button.dart';
 import '../ui/components/glass_card.dart';
+import '../ui/components/gradient_page_shell.dart';
 import '../ui/transitions/page_transitions.dart';
+import '../providers/app_settings_provider.dart';
 import 'login_page_v2.dart';
 import 'register_page_v2.dart';
+import 'welcome/welcome_copy.dart';
+import 'welcome/welcome_settings_sheet.dart';
 
-/// Page d'accueil attrayante pour les enfants avec logo et bienvenue en arabe
+/// Page d'accueil — produit SaaS sobre : hiérarchie typo, CTA compacts, réglages.
 class WelcomePageV2 extends StatefulWidget {
   const WelcomePageV2({super.key});
 
@@ -26,56 +31,42 @@ class _WelcomePageV2State extends State<WelcomePageV2>
   late Animation<double> _logoRotation;
   late Animation<double> _starsRotation;
 
-  // Couleurs vives pour enfants
-  static const List<Color> _childColors = [
-    Color(0xFFFF6B6B), // Rouge vif
-    Color(0xFFFFD93D), // Jaune vif
-    Color(0xFF4ECDC4), // Turquoise
-    Color(0xFF95E1D3), // Vert menthe
-    Color(0xFFFFA07A), // Saumon
-    Color(0xFF87CEEB), // Bleu ciel
-    Color(0xFFFFB6C1), // Rose
-    Color(0xFFDDA0DD), // Prune
+  static const List<Color> _accentPalette = [
+    Color(0xFF818CF8),
+    Color(0xFFA78BFA),
+    Color(0xFF22D3EE),
+    Color(0xFF6366F1),
+    Color(0xFF8B5CF6),
+    Color(0xFF06B6D4),
+    Color(0xFF94A3B8),
+    Color(0xFF64748B),
   ];
 
   @override
   void initState() {
     super.initState();
-
-    // Animation du logo (bounce + rotation)
     _logoController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1200),
     );
     _logoScale = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _logoController,
-        curve: Curves.elasticOut,
-      ),
+      CurvedAnimation(parent: _logoController, curve: Curves.easeOutCubic),
     );
-    _logoRotation = Tween<double>(begin: -0.2, end: 0.0).animate(
-      CurvedAnimation(
-        parent: _logoController,
-        curve: Curves.easeOut,
-      ),
+    _logoRotation = Tween<double>(begin: -0.08, end: 0.0).animate(
+      CurvedAnimation(parent: _logoController, curve: Curves.easeOut),
     );
 
-    // Animation des étoiles (rotation continue)
     _starsController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 20),
+      duration: const Duration(seconds: 24),
     )..repeat();
     _starsRotation = Tween<double>(begin: 0.0, end: 2 * math.pi).animate(
-      CurvedAnimation(
-        parent: _starsController,
-        curve: Curves.linear,
-      ),
+      CurvedAnimation(parent: _starsController, curve: Curves.linear),
     );
 
-    // Animation de bounce pour les éléments décoratifs
     _bounceController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 2200),
     )..repeat(reverse: true);
 
     _logoController.forward();
@@ -99,12 +90,8 @@ class _WelcomePageV2State extends State<WelcomePageV2>
           return Transform.rotate(
             angle: _starsRotation.value,
             child: Opacity(
-              opacity: 0.6,
-              child: Icon(
-                Icons.star,
-                color: color,
-                size: size,
-              ),
+              opacity: 0.26,
+              child: Icon(Icons.star_rounded, color: color, size: size),
             ),
           );
         },
@@ -120,11 +107,14 @@ class _WelcomePageV2State extends State<WelcomePageV2>
         animation: _bounceController,
         builder: (context, child) {
           return Transform.translate(
-            offset: Offset(0, math.sin(_bounceController.value * 2 * math.pi) * 10),
+            offset: Offset(
+              0,
+              math.sin(_bounceController.value * 2 * math.pi) * 8,
+            ),
             child: Icon(
               icon,
-              color: color,
-              size: 40,
+              color: color.withValues(alpha: 0.5),
+              size: 32,
             ),
           );
         },
@@ -132,44 +122,39 @@ class _WelcomePageV2State extends State<WelcomePageV2>
     );
   }
 
-  Widget _buildLogo() {
+  Widget _buildLogo(ColorScheme scheme) {
     return AnimatedBuilder(
       animation: _logoController,
       builder: (context, child) {
-        final clampedOpacity = _logoScale.value.clamp(0.0, 1.0);
+        final o = _logoScale.value.clamp(0.0, 1.0);
         return Transform.scale(
           scale: _logoScale.value,
           child: Transform.rotate(
             angle: _logoRotation.value,
             child: Opacity(
-              opacity: clampedOpacity,
+              opacity: o,
               child: Container(
-                width: 120,
-                height: 120,
+                width: 96,
+                height: 96,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFFFF6B6B),
-                      Color(0xFFFFD93D),
-                      Color(0xFF4ECDC4),
-                    ],
-                  ),
+                  gradient: EduBridgeColors.primaryGradient,
                   shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 20,
-                      spreadRadius: 5,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
+                  boxShadow: Theme.of(context).brightness == Brightness.dark
+                      ? EduBridgeColors.cardShadowLayeredDark
+                      : EduBridgeColors.cardShadowLayered,
                 ),
-                child: const Icon(
-                  Icons.school,
-                  size: 70,
-                  color: Colors.white,
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(
+                        Icons.school_rounded,
+                        size: 52,
+                        color: scheme.onPrimary,
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
@@ -181,200 +166,230 @@ class _WelcomePageV2State extends State<WelcomePageV2>
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<AppSettingsProvider>().languageCode;
+    final scheme = Theme.of(context).colorScheme;
+    final onBg = scheme.onSurface;
+    final muted = Theme.of(context).brightness == Brightness.dark
+        ? EduBridgeColors.darkTextSecondary
+        : EduBridgeColors.textSecondary;
+
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFFFF5E1), // Crème chaud
-              Color(0xFFE8F5E9), // Vert très clair
-              Color(0xFFE3F2FD), // Bleu très clair
-              Color(0xFFFCE4EC), // Rose très clair
-            ],
-            stops: [0.0, 0.3, 0.6, 1.0],
-          ),
-        ),
+      backgroundColor: Colors.transparent,
+      body: GradientPageShell(
         child: SafeArea(
           child: Stack(
             children: [
-              // Éléments décoratifs flottants
               _buildFloatingStar(
-                const Offset(50, 100),
-                _childColors[0],
-                30,
-              ),
-              _buildFloatingStar(
-                const Offset(300, 150),
-                _childColors[1],
-                25,
+                const Offset(40, 72),
+                _accentPalette[0],
+                26,
               ),
               _buildFloatingStar(
-                const Offset(80, 250),
-                _childColors[2],
-                35,
+                const Offset(300, 120),
+                _accentPalette[1],
+                22,
+              ),
+              _buildFloatingStar(
+                const Offset(64, 220),
+                _accentPalette[2],
+                28,
               ),
               _buildBouncingShape(
-                const Offset(320, 80),
-                _childColors[3],
-                Icons.favorite,
+                const Offset(312, 64),
+                _accentPalette[3],
+                Icons.diamond_outlined,
               ),
               _buildBouncingShape(
-                const Offset(40, 400),
-                _childColors[4],
-                Icons.auto_awesome,
-              ),
-              _buildBouncingShape(
-                const Offset(280, 450),
-                _childColors[5],
-                Icons.celebration,
+                const Offset(32, 360),
+                _accentPalette[4],
+                Icons.auto_awesome_outlined,
               ),
 
-              // Contenu principal
-              Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(EduBridgeTheme.spacingXL),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 40),
-                      // Logo avec animation
-                      Hero(
-                        tag: 'logo',
-                        child: _buildLogo(),
+              Positioned(
+                top: 4,
+                right: 4,
+                child: IconButton(
+                  tooltip: WelcomeCopy.settingsTitle(lang),
+                  icon: Icon(
+                    Icons.tune_rounded,
+                    color: onBg.withValues(alpha: 0.85),
+                  ),
+                  onPressed: () => showWelcomeSettingsSheet(context),
+                ),
+              ),
+
+              CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: EduBridgeTheme.spacingLG,
                       ),
-                      const SizedBox(height: 40),
-
-                      // Message de bienvenue en arabe
-                      TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        duration: const Duration(milliseconds: 1000),
-                        curve: Curves.easeOut,
-                        builder: (context, value, child) {
-                          return Opacity(
-                            opacity: value.clamp(0.0, 1.0),
-                            child: Transform.translate(
-                              offset: Offset(0, 20 * (1 - value)),
-                              child: Column(
-                                children: [
-                                  // Texte arabe "مرحباً" (Bienvenue)
-                                  Text(
-                                    'مرحباً',
-                                    style: EduBridgeTypography.arabicTitle(
-                                      fontSize: 56,
-                                      fontWeight: FontWeight.bold,
-                                      color: _childColors[0],
-                                    ).copyWith(
-                                      shadows: [
-                                        Shadow(
-                                          color: Colors.black.withOpacity(0.2),
-                                          offset: const Offset(2, 2),
-                                          blurRadius: 4,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  // Sous-titre en français
-                                  Text(
-                                    'Bienvenue sur',
-                                    style: EduBridgeTypography.headlineSmall.copyWith(
-                                      color: EduBridgeColors.textSecondary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  // Nom de l'application
-                                  Text(
-                                    'EduBridge',
-                                    style: TextStyle(
-                                      fontSize: 42,
-                                      fontWeight: FontWeight.bold,
-                                      foreground: Paint()
-                                        ..shader = const LinearGradient(
-                                          colors: [
-                                            Color(0xFFFF6B6B),
-                                            Color(0xFFFFD93D),
-                                            Color(0xFF4ECDC4),
-                                          ],
-                                        ).createShader(
-                                          const Rect.fromLTWH(0, 0, 200, 70),
-                                        ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  // Message amical
-                                  Text(
-                                    'Apprendre en s\'amusant ! 🎉',
-                                    style: EduBridgeTypography.bodyLarge.copyWith(
-                                      color: EduBridgeColors.textSecondary,
-                                      fontSize: 18,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 400),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Hero(
+                                tag: 'logo',
+                                child: _buildLogo(scheme),
                               ),
-                            ),
-                          );
-                        },
-                      ),
+                              const SizedBox(height: 28),
 
-                      const SizedBox(height: 60),
-
-                      // Boutons avec animation
-                      TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        duration: const Duration(milliseconds: 1200),
-                        curve: Curves.easeOut,
-                        builder: (context, value, child) {
-                          return Opacity(
-                            opacity: value.clamp(0.0, 1.0),
-                            child: Transform.translate(
-                              offset: Offset(0, 30 * (1 - value)),
-                              child: GlassCard(
-                                padding: const EdgeInsets.all(EduBridgeTheme.spacingXL),
+                              TweenAnimationBuilder<double>(
+                                tween: Tween(begin: 0.0, end: 1.0),
+                                duration: const Duration(milliseconds: 700),
+                                curve: Curves.easeOutCubic,
+                                builder: (context, value, child) {
+                                  return Opacity(
+                                    opacity: value.clamp(0.0, 1.0),
+                                    child: Transform.translate(
+                                      offset: Offset(0, 14 * (1 - value)),
+                                      child: child,
+                                    ),
+                                  );
+                                },
                                 child: Column(
                                   children: [
-                                    GradientButton(
-                                      text: 'Commencer',
-                                      icon: Icons.rocket_launch,
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          PageTransitions.fadeSlideRoute(
-                                            const RegisterPageV2(),
-                                          ),
-                                        );
-                                      },
-                                      variant: GradientButtonVariant.primary,
+                                    Directionality(
+                                      textDirection: TextDirection.rtl,
+                                      child: Text(
+                                        '\u0645\u0631\u062d\u0628\u0627\u064b \u0628\u0643',
+                                        textAlign: TextAlign.center,
+                                        style: EduBridgeTypography.arabicTitle(
+                                          fontSize: 34,
+                                          fontWeight: FontWeight.w700,
+                                          color: scheme.primary,
+                                        ),
+                                      ),
                                     ),
-                                    const SizedBox(height: EduBridgeTheme.spacingMD),
-                                    GradientButton(
-                                      text: 'Se connecter',
-                                      variant: GradientButtonVariant.secondary,
-                                      icon: Icons.login,
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          PageTransitions.fadeSlideRoute(
-                                            const LoginPageV2(),
-                                          ),
-                                        );
-                                      },
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      WelcomeCopy.welcomeToLine(lang),
+                                      textAlign: TextAlign.center,
+                                      style: EduBridgeTypography.titleMedium
+                                          .copyWith(
+                                        color: muted,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    ShaderMask(
+                                      blendMode: BlendMode.srcIn,
+                                      shaderCallback: (bounds) =>
+                                          EduBridgeColors.primaryGradient
+                                              .createShader(
+                                        Rect.fromLTWH(
+                                          0,
+                                          0,
+                                          bounds.width,
+                                          bounds.height,
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'EduBridge',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 36,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: -0.5,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      WelcomeCopy.tagline(lang),
+                                      textAlign: TextAlign.center,
+                                      style: EduBridgeTypography.bodyMedium
+                                          .copyWith(
+                                        color: muted,
+                                        height: 1.45,
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
 
-                      const SizedBox(height: 40),
-                    ],
+                              const SizedBox(height: 32),
+
+                              TweenAnimationBuilder<double>(
+                                tween: Tween(begin: 0.0, end: 1.0),
+                                duration: const Duration(milliseconds: 900),
+                                curve: Curves.easeOutCubic,
+                                builder: (context, value, child) {
+                                  return Opacity(
+                                    opacity: value.clamp(0.0, 1.0),
+                                    child: Transform.translate(
+                                      offset: Offset(0, 18 * (1 - value)),
+                                      child: child,
+                                    ),
+                                  );
+                                },
+                                child: GlassCard(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 18,
+                                  ),
+                                  borderRadius: BorderRadius.circular(
+                                    EduBridgeTheme.radiusLG,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      GradientButton(
+                                        text: WelcomeCopy.startCta(lang),
+                                        height: 44,
+                                        borderRadius: BorderRadius.circular(
+                                          EduBridgeTheme.radiusMD,
+                                        ),
+                                        icon: Icons.arrow_forward_rounded,
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            PageTransitions.fadeSlideRoute(
+                                              const RegisterPageV2(),
+                                            ),
+                                          );
+                                        },
+                                        variant: GradientButtonVariant.primary,
+                                      ),
+                                      const SizedBox(height: 10),
+                                      GradientButton(
+                                        text: WelcomeCopy.loginCta(lang),
+                                        height: 44,
+                                        borderRadius: BorderRadius.circular(
+                                          EduBridgeTheme.radiusMD,
+                                        ),
+                                        variant:
+                                            GradientButtonVariant.secondary,
+                                        icon: Icons.login_rounded,
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            PageTransitions.fadeSlideRoute(
+                                              const LoginPageV2(),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),

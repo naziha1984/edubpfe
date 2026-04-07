@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import '../models/lesson_model.dart';
 import '../models/subject_model.dart';
 import '../ui/theme/edubridge_colors.dart';
 import '../ui/theme/edubridge_typography.dart';
 import '../ui/theme/edubridge_theme.dart';
 import '../ui/components/gradient_button.dart';
+
+class LessonFormResult {
+  final LessonModel lesson;
+  final List<PlatformFile> files;
+
+  const LessonFormResult({
+    required this.lesson,
+    this.files = const [],
+  });
+}
 
 /// BottomSheet moderne pour créer/éditer une lesson avec editor et preview
 class LessonFormBottomSheet extends StatefulWidget {
@@ -36,6 +47,7 @@ class _LessonFormBottomSheetState extends State<LessonFormBottomSheet> {
   bool _isActive = true;
   bool _isLoading = false;
   bool _showPreview = false;
+  final List<PlatformFile> _pickedFiles = [];
 
   @override
   void initState() {
@@ -63,6 +75,23 @@ class _LessonFormBottomSheetState extends State<LessonFormBottomSheet> {
     _orderController.dispose();
     _levelController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickFiles() async {
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      type: FileType.any,
+      withData: true,
+    );
+    if (result != null && result.files.isNotEmpty) {
+      setState(() {
+        _pickedFiles.addAll(result.files);
+      });
+    }
+  }
+
+  void _removeFile(int index) {
+    setState(() => _pickedFiles.removeAt(index));
   }
 
   Future<void> _handleSubmit() async {
@@ -105,7 +134,10 @@ class _LessonFormBottomSheetState extends State<LessonFormBottomSheet> {
       isActive: _isActive,
     );
 
-    Navigator.pop(context, lesson);
+    Navigator.pop(
+      context,
+      LessonFormResult(lesson: lesson, files: List.from(_pickedFiles)),
+    );
   }
 
   @override
@@ -357,6 +389,29 @@ class _LessonFormBottomSheetState extends State<LessonFormBottomSheet> {
               });
             },
           ),
+          const SizedBox(height: EduBridgeTheme.spacingMD),
+          OutlinedButton.icon(
+            onPressed: _pickFiles,
+            icon: const Icon(Icons.attach_file_rounded),
+            label: const Text('Ajouter des fichiers (PDF, Word, image, etc.)'),
+          ),
+          if (_pickedFiles.isNotEmpty) ...[
+            const SizedBox(height: EduBridgeTheme.spacingSM),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: List.generate(_pickedFiles.length, (index) {
+                final file = _pickedFiles[index];
+                return Chip(
+                  label: Text(
+                    file.name,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  onDeleted: () => _removeFile(index),
+                );
+              }),
+            ),
+          ],
           const SizedBox(height: EduBridgeTheme.spacingMD),
           // Description field
           TextFormField(

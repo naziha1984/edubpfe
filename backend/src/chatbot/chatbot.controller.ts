@@ -11,6 +11,7 @@ import {
 import { ChatbotService } from './chatbot.service';
 import { KidAuthGuard } from '../kids/guards/kid-auth.guard';
 import { GetKid } from '../kids/decorators/get-kid.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 export class SendMessageDto {
   message: string;
@@ -35,6 +36,21 @@ export class ChatbotController {
     return {
       response: result.response,
       sessionId: result.sessionId,
+      language: result.language,
+      isFiltered: result.isFiltered,
+    };
+  }
+
+  @Post('message-user')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async sendMessageForUser(@Body() sendMessageDto: SendMessageDto) {
+    const result = await this.chatbotService.sendMessageForUser(
+      sendMessageDto.message,
+    );
+
+    return {
+      response: result.response,
       language: result.language,
       isFiltered: result.isFiltered,
     };

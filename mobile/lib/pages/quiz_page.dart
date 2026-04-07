@@ -28,48 +28,74 @@ class QuizPage extends StatefulWidget {
 }
 
 class _QuizPageState extends State<QuizPage> {
-  bool _sessionCreated = false;
-  List<Map<String, dynamic>> _answers = [];
+  bool _ready = false;
+  List<Map<String, dynamic>> _questions = [];
+  final Map<int, int> _selectedAnswers = {};
 
   @override
   void initState() {
     super.initState();
-    _createSession();
+    _bootstrap();
   }
 
-  Future<void> _createSession() async {
-    final quizProvider = Provider.of<QuizProvider>(context, listen: false);
+  Future<void> _bootstrap() async {
+    final qp = Provider.of<QuizProvider>(context, listen: false);
 
-    final success = await ErrorHandler.handleApiCall(
+    final sessionOk = await ErrorHandler.handleApiCall<bool>(
       context,
-      () => quizProvider.createSession(
-        kidId: widget.kidId,
-        lessonId: widget.lessonId,
-      ),
+      () async {
+        await qp.createSession(
+          kidId: widget.kidId,
+          lessonId: widget.lessonId,
+        );
+        return true;
+      },
     );
+    if (!mounted || sessionOk != true) return;
 
-    if (mounted && success == true) {
-      setState(() {
-        _sessionCreated = true;
-      });
-    }
+    final sid = qp.currentSession?['id']?.toString();
+    if (sid == null || sid.isEmpty) return;
+
+    final raw = await ErrorHandler.handleApiCall<List<dynamic>>(
+      context,
+      () => qp.loadQuizQuestionsForSession(sid),
+    );
+    if (!mounted) return;
+
+    setState(() {
+      _questions = (raw ?? [])
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+      _ready = true;
+    });
   }
 
   Future<void> _submitQuiz() async {
-    if (_answers.isEmpty) {
+    if (_questions.isEmpty) return;
+
+    if (_selectedAnswers.length != _questions.length) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please answer at least one question'),
+          content: Text('Please answer every question'),
           backgroundColor: EduBridgeColors.warning,
         ),
       );
       return;
     }
 
-    final quizProvider = Provider.of<QuizProvider>(context, listen: false);
-    final sessionId = quizProvider.currentSession?['id'];
+    final answers = _questions.map((q) {
+      final idx = (q['questionIndex'] as num?)?.toInt() ?? 0;
+      return {
+        'questionIndex': idx,
+        'selectedAnswer': _selectedAnswers[idx],
+      };
+    }).toList();
 
-    if (sessionId == null) {
+    final quizProvider = Provider.of<QuizProvider>(context, listen: false);
+    final rawSessionId = quizProvider.currentSession?['id'];
+    final sessionId = rawSessionId?.toString();
+
+    if (sessionId == null || sessionId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Session not found'),
@@ -83,7 +109,7 @@ class _QuizPageState extends State<QuizPage> {
       context,
       () => quizProvider.submitQuiz(
         sessionId: sessionId,
-        answers: _answers,
+        answers: answers,
       ),
     );
 
@@ -110,85 +136,112 @@ class _QuizPageState extends State<QuizPage> {
           gradient: EduBridgeColors.backgroundGradient,
         ),
         child: SafeArea(
-          child: quizProvider.isLoading || !_sessionCreated
+          child: !(_ready && !quizProvider.isLoading)
               ? const Loading(message: 'Loading quiz...')
-              : Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back),
-                            onPressed: () => Navigator.pop(context),
-                            color: EduBridgeColors.textPrimary,
-                          ),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  widget.lessonName,
-                                  style: EduBridgeTypography.headlineSmall
-                                      .copyWith(
-                                    color: EduBridgeColors.textPrimary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+              : _questions.isEmpty
+                  ? _buildNoQuestions(context)
+                  : Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.arrow_back),
+                                onPressed: () => Navigator.pop(context),
+                                color: EduBridgeColors.textPrimary,
+                              ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      widget.lessonName,
+                                      style: EduBridgeTypography.headlineSmall
+                                          .copyWith(
+                                        color: EduBridgeColors.textPrimary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Quiz',
+                                      style: EduBridgeTypography.bodyMedium
+                                          .copyWith(
+                                        color: EduBridgeColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  'Quiz',
-                                  style: EduBridgeTypography.bodyMedium.copyWith(
-                                    color: EduBridgeColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: ListView(
-                        padding: const EdgeInsets.all(16),
-                        children: [
-                          // Mock questions - in real app, fetch from API
-                          _buildQuestion(
-                            index: 0,
-                            question: 'What is 2 + 2?',
-                            options: ['3', '4', '5', '6'],
-                            correctAnswer: 1,
+                        ),
+                        Expanded(
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _questions.length,
+                            itemBuilder: (context, i) {
+                              return _buildQuestionCard(_questions[i]);
+                            },
                           ),
-                          _buildQuestion(
-                            index: 1,
-                            question: 'What is the capital of France?',
-                            options: ['London', 'Berlin', 'Paris', 'Madrid'],
-                            correctAnswer: 2,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: GradientButton(
+                            text: 'Submit Quiz',
+                            icon: Icons.check,
+                            onPressed: _submitQuiz,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: GradientButton(
-                        text: 'Submit Quiz',
-                        icon: Icons.check,
-                        onPressed: _submitQuiz,
-                      ),
-                    ),
-                  ],
-                ),
         ),
       ),
     );
   }
 
-  Widget _buildQuestion({
-    required int index,
-    required String question,
-    required List<String> options,
-    required int correctAnswer,
-  }) {
-    int? selectedAnswer;
+  Widget _buildNoQuestions(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.quiz_outlined, size: 64, color: EduBridgeColors.textSecondary),
+          const SizedBox(height: 16),
+          Text(
+            'No quiz for this lesson',
+            textAlign: TextAlign.center,
+            style: EduBridgeTypography.titleLarge.copyWith(
+              color: EduBridgeColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'An admin or teacher must add quiz questions to this lesson in the database.',
+            textAlign: TextAlign.center,
+            style: EduBridgeTypography.bodyMedium.copyWith(
+              color: EduBridgeColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 24),
+          TextButton.icon(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.arrow_back),
+            label: const Text('Back'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuestionCard(Map<String, dynamic> q) {
+    final index = (q['questionIndex'] as num?)?.toInt() ?? 0;
+    final question = q['question']?.toString() ?? '';
+    final rawOptions = q['options'];
+    final options = rawOptions is List
+        ? rawOptions.map((e) => e.toString()).toList()
+        : <String>[];
 
     return GlassCard(
       margin: const EdgeInsets.only(bottom: 16),
@@ -216,15 +269,11 @@ class _QuizPageState extends State<QuizPage> {
             return RadioListTile<int>(
               title: Text(option),
               value: optionIndex,
-              groupValue: selectedAnswer,
+              groupValue: _selectedAnswers[index],
               onChanged: (value) {
+                if (value == null) return;
                 setState(() {
-                  selectedAnswer = value;
-                  _answers.removeWhere((a) => a['questionIndex'] == index);
-                  _answers.add({
-                    'questionIndex': index,
-                    'selectedAnswer': value,
-                  });
+                  _selectedAnswers[index] = value;
                 });
               },
             );

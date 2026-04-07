@@ -53,8 +53,8 @@ class _GradientButtonState extends State<GradientButton>
       vsync: this,
       duration: const Duration(milliseconds: 150),
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.97).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
     );
   }
 
@@ -112,13 +112,23 @@ class _GradientButtonState extends State<GradientButton>
     if (widget.variant == GradientButtonVariant.outline) return null;
     if (widget.onPressed == null || widget.isLoading) return null;
 
-    return EduBridgeColors.shadowPrimary;
+    return [
+      ...EduBridgeColors.shadowPrimary,
+      BoxShadow(
+        color: Colors.black.withOpacity(0.05),
+        blurRadius: 8,
+        offset: const Offset(0, 3),
+      ),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
+    final compact = widget.height <= 48;
+    final iconSize = compact ? 18.0 : 20.0;
+    final fontSize = compact ? 14.0 : 16.0;
     final effectiveBorderRadius =
-        widget.borderRadius ?? BorderRadius.circular(EduBridgeTheme.radiusMD);
+        widget.borderRadius ?? BorderRadius.circular(EduBridgeTheme.radiusLG);
     final effectiveGradient = _getGradient();
 
     return AnimatedBuilder(
@@ -153,8 +163,9 @@ class _GradientButtonState extends State<GradientButton>
                 child: Container(
                   padding: widget.padding ??
                       EdgeInsets.symmetric(
-                        horizontal: EduBridgeTheme.spacingLG,
-                        vertical: EduBridgeTheme.spacingMD,
+                        horizontal:
+                            compact ? 20.0 : EduBridgeTheme.spacingLG,
+                        vertical: compact ? 10.0 : EduBridgeTheme.spacingMD,
                       ),
                   alignment: Alignment.center,
                   child: widget.isLoading
@@ -176,16 +187,20 @@ class _GradientButtonState extends State<GradientButton>
                               Icon(
                                 widget.icon,
                                 color: _getTextColor(),
-                                size: 20,
+                                size: iconSize,
                               ),
-                              const SizedBox(width: EduBridgeTheme.spacingSM),
+                              SizedBox(
+                                width: compact
+                                    ? EduBridgeTheme.spacingXS + 2
+                                    : EduBridgeTheme.spacingSM,
+                              ),
                             ],
                             Text(
                               widget.text,
                               style: EduBridgeTypography.labelLarge.copyWith(
                                 color: _getTextColor(),
                                 fontWeight: FontWeight.w600,
-                                fontSize: 16,
+                                fontSize: fontSize,
                               ),
                             ),
                           ],

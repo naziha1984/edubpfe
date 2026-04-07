@@ -8,8 +8,20 @@ export type NotificationDocument = Notification &
   };
 
 export enum NotificationType {
-  ASSIGNMENT_DUE_24H = 'ASSIGNMENT_DUE_24H', // 作业到期前24小时
-  INACTIVITY_3_DAYS = 'INACTIVITY_3_DAYS', // 3天不活动
+  ASSIGNMENT_DUE_24H = 'ASSIGNMENT_DUE_24H',
+  INACTIVITY_3_DAYS = 'INACTIVITY_3_DAYS',
+  /** New work assigned to the class */
+  ASSIGNMENT_CREATED = 'ASSIGNMENT_CREATED',
+  /** Live session scheduled */
+  LIVE_SESSION_SCHEDULED = 'LIVE_SESSION_SCHEDULED',
+  /** Live session is in progress */
+  LIVE_SESSION_STARTED = 'LIVE_SESSION_STARTED',
+  /** Quiz / lesson progress */
+  CHILD_PROGRESS = 'CHILD_PROGRESS',
+  /** XP, badges, streaks */
+  REWARD_EARNED = 'REWARD_EARNED',
+  /** Kid turned in homework */
+  ASSIGNMENT_SUBMITTED = 'ASSIGNMENT_SUBMITTED',
 }
 
 export enum NotificationStatus {

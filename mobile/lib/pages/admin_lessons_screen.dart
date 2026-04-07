@@ -45,9 +45,10 @@ class _AdminLessonsScreenState extends State<AdminLessonsScreen> {
     // Charger les subjects si nécessaire
     if (subjectsProvider.subjects.isEmpty) {
       await subjectsProvider.loadSubjects();
+      if (!mounted) return;
     }
 
-    final result = await showModalBottomSheet<LessonModel>(
+    final result = await showModalBottomSheet<LessonFormResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -68,9 +69,10 @@ class _AdminLessonsScreenState extends State<AdminLessonsScreen> {
     // Charger les subjects si nécessaire
     if (subjectsProvider.subjects.isEmpty) {
       await subjectsProvider.loadSubjects();
+      if (!mounted) return;
     }
 
-    final result = await showModalBottomSheet<LessonModel>(
+    final result = await showModalBottomSheet<LessonFormResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -85,12 +87,12 @@ class _AdminLessonsScreenState extends State<AdminLessonsScreen> {
     }
   }
 
-  Future<void> _handleCreate(LessonModel lesson) async {
+  Future<void> _handleCreate(LessonFormResult result) async {
     final provider = Provider.of<LessonsProvider>(context, listen: false);
 
     final success = await ErrorHandler.handleApiCall<LessonModel>(
       context,
-      () => provider.createLesson(lesson),
+      () => provider.createLesson(result.lesson, files: result.files),
     );
 
     if (success != null && mounted) {
@@ -98,12 +100,12 @@ class _AdminLessonsScreenState extends State<AdminLessonsScreen> {
     }
   }
 
-  Future<void> _handleUpdate(LessonModel lesson) async {
+  Future<void> _handleUpdate(LessonFormResult result) async {
     final provider = Provider.of<LessonsProvider>(context, listen: false);
 
     final success = await ErrorHandler.handleApiCall<LessonModel>(
       context,
-      () => provider.updateLesson(lesson),
+      () => provider.updateLesson(result.lesson, files: result.files),
     );
 
     if (success != null && mounted) {
@@ -144,6 +146,7 @@ class _AdminLessonsScreenState extends State<AdminLessonsScreen> {
           Toast.success(context, 'Lesson deleted successfully!');
         }
       } catch (e) {
+        if (!mounted) return;
         ErrorHandler.showError(context, e);
       }
     }

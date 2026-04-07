@@ -1,3 +1,26 @@
+class LessonAttachmentModel {
+  final String originalName;
+  final String mimeType;
+  final int size;
+  final String url;
+
+  const LessonAttachmentModel({
+    required this.originalName,
+    required this.mimeType,
+    required this.size,
+    required this.url,
+  });
+
+  factory LessonAttachmentModel.fromJson(Map<String, dynamic> json) {
+    return LessonAttachmentModel(
+      originalName: json['originalName']?.toString() ?? '',
+      mimeType: json['mimeType']?.toString() ?? '',
+      size: (json['size'] is num) ? (json['size'] as num).toInt() : 0,
+      url: json['url']?.toString() ?? '',
+    );
+  }
+}
+
 class LessonModel {
   final String id;
   final String subjectId;
@@ -8,6 +31,7 @@ class LessonModel {
   final String? level;
   final String? language;
   final bool isActive;
+  final List<LessonAttachmentModel> attachments;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -21,6 +45,7 @@ class LessonModel {
     this.level,
     this.language,
     this.isActive = true,
+    this.attachments = const [],
     this.createdAt,
     this.updatedAt,
   });
@@ -36,6 +61,15 @@ class LessonModel {
       level: json['level'],
       language: json['language'],
       isActive: json['isActive'] ?? true,
+      attachments: (json['attachments'] is List)
+          ? (json['attachments'] as List)
+              .map(
+                (a) => LessonAttachmentModel.fromJson(
+                  Map<String, dynamic>.from(a as Map),
+                ),
+              )
+              .toList()
+          : const [],
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : null,
@@ -81,6 +115,7 @@ class LessonModel {
     String? level,
     String? language,
     bool? isActive,
+    List<LessonAttachmentModel>? attachments,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -94,6 +129,7 @@ class LessonModel {
       level: level ?? this.level,
       language: language ?? this.language,
       isActive: isActive ?? this.isActive,
+      attachments: attachments ?? this.attachments,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

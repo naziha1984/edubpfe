@@ -4,12 +4,16 @@ import '../ui/theme/edubridge_colors.dart';
 import '../ui/theme/edubridge_typography.dart';
 import '../ui/theme/edubridge_theme.dart';
 import '../ui/components/glass_card.dart';
+import '../ui/components/gradient_page_shell.dart';
 import '../providers/auth_provider.dart';
 import '../providers/teacher_provider.dart';
 import '../utils/app_router.dart';
 import '../ui/components/loading_skeleton.dart';
 import '../components/error_state.dart';
 import 'teacher_classes_screen.dart';
+import 'teacher_students_hub_screen.dart';
+import 'teacher_courses_screen.dart';
+import 'notifications_screen.dart';
 import '../ui/transitions/page_transitions.dart';
 
 /// Écran d'accueil Teacher moderne avec KPIs
@@ -53,10 +57,8 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
     }
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: EduBridgeColors.backgroundGradient,
-        ),
+      backgroundColor: Colors.transparent,
+      body: GradientPageShell(
         child: SafeArea(
           child: Column(
             children: [
@@ -84,6 +86,18 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                           ),
                         ),
                       ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.notifications_outlined),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (_) => const NotificationsScreen(),
+                          ),
+                        );
+                      },
+                      color: EduBridgeColors.textPrimary,
                     ),
                     IconButton(
                       icon: const Icon(Icons.logout),
@@ -276,6 +290,114 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                     ),
                     Text(
                       'Create and manage your classes',
+                      style: EduBridgeTypography.bodySmall.copyWith(
+                        color: EduBridgeColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: EduBridgeColors.textSecondary,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: EduBridgeTheme.spacingMD),
+        GlassCard(
+          padding: const EdgeInsets.all(EduBridgeTheme.spacingMD),
+          onTap: () {
+            Navigator.push(
+              context,
+              PageTransitions.fadeSlideRoute(
+                const TeacherStudentsHubScreen(),
+              ),
+            );
+          },
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(EduBridgeTheme.spacingMD),
+                decoration: BoxDecoration(
+                  color: EduBridgeColors.secondary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(EduBridgeTheme.radiusMD),
+                ),
+                child: const Icon(
+                  Icons.people_alt_rounded,
+                  color: EduBridgeColors.secondary,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(width: EduBridgeTheme.spacingMD),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Students',
+                      style: EduBridgeTypography.titleMedium.copyWith(
+                        color: EduBridgeColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Add students to your classes (child ID)',
+                      style: EduBridgeTypography.bodySmall.copyWith(
+                        color: EduBridgeColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: EduBridgeColors.textSecondary,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: EduBridgeTheme.spacingMD),
+        GlassCard(
+          padding: const EdgeInsets.all(EduBridgeTheme.spacingMD),
+          onTap: () {
+            Navigator.push(
+              context,
+              PageTransitions.fadeSlideRoute(
+                const TeacherCoursesScreen(),
+              ),
+            );
+          },
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(EduBridgeTheme.spacingMD),
+                decoration: BoxDecoration(
+                  color: EduBridgeColors.accent.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(EduBridgeTheme.radiusMD),
+                ),
+                child: const Icon(
+                  Icons.menu_book_rounded,
+                  color: EduBridgeColors.accent,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(width: EduBridgeTheme.spacingMD),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Courses & lessons',
+                      style: EduBridgeTypography.titleMedium.copyWith(
+                        color: EduBridgeColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Create subjects and lesson content',
                       style: EduBridgeTypography.bodySmall.copyWith(
                         color: EduBridgeColors.textSecondary,
                       ),

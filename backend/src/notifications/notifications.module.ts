@@ -4,6 +4,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
 import { NotificationsCron } from './notifications.cron';
+import { NotificationsGateway } from './notifications.gateway';
+import { AuthModule } from '../auth/auth.module';
 import {
   Notification,
   NotificationSchema,
@@ -26,9 +28,10 @@ import { Kid, KidSchema } from '../kids/schemas/kid.schema';
       { name: Kid.name, schema: KidSchema },
     ]),
     ScheduleModule.forRoot(),
+    AuthModule,
   ],
   controllers: [NotificationsController],
-  providers: [NotificationsService, NotificationsCron],
+  providers: [NotificationsService, NotificationsCron, NotificationsGateway],
   exports: [NotificationsService],
 })
 export class NotificationsModule {}

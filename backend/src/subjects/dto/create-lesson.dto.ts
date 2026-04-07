@@ -12,6 +12,10 @@ export class CreateLessonDto {
   @IsNotEmpty()
   subjectId: string;
 
+  @IsMongoId()
+  @IsOptional()
+  classId?: string;
+
   @IsString()
   @IsNotEmpty()
   title: string;

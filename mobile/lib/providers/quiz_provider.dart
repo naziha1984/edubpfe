@@ -47,6 +47,21 @@ class QuizProvider with ChangeNotifier {
     }
   }
 
+  Future<List<dynamic>> loadQuizQuestionsForSession(String sessionId) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final list = await _apiService.getQuizQuestionsForSession(sessionId);
+      _isLoading = false;
+      notifyListeners();
+      return list;
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   Future<bool> createSession({
     required String kidId,
     required String lessonId,

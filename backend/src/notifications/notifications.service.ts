@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import {
@@ -15,9 +15,12 @@ import {
 import { Progress, ProgressDocument } from '../quiz/schemas/progress.schema';
 import { Kid, KidDocument } from '../kids/schemas/kid.schema';
 import { UserRole } from '../users/schemas/user.schema';
+import { NotificationsGateway } from './notifications.gateway';
 
 @Injectable()
 export class NotificationsService {
+  private gateway: NotificationsGateway | null = null;
+
   constructor(
     @InjectModel(Notification.name)
     private notificationModel: Model<NotificationDocument>,
@@ -28,6 +31,109 @@ export class NotificationsService {
     @InjectModel(Progress.name) private progressModel: Model<ProgressDocument>,
     @InjectModel(Kid.name) private kidModel: Model<KidDocument>,
   ) {}
+
+  attachGateway(gateway: NotificationsGateway) {
+    this.gateway = gateway;
+  }
+
+  /**
+   * Persist + optional Socket.IO push (parents / teachers only).
+   */
+  async createForUser(
+    userId: string,
+    type: NotificationType,
+    title: string,
+    message: string,
+    opts?: {
+      kidId?: string;
+      relatedId?: string;
+      relatedType?: string;
+    },
+  ): Promise<NotificationDocument> {
+    const doc = new this.notificationModel({
+      userId: new Types.ObjectId(userId),
+      type,
+      status: NotificationStatus.UNREAD,
+      title,
+      message,
+      kidId: opts?.kidId ? new Types.ObjectId(opts.kidId) : undefined,
+      relatedId: opts?.relatedId
+        ? new Types.ObjectId(opts.relatedId)
+        : undefined,
+      relatedType: opts?.relatedType,
+    });
+    await doc.save();
+    this.gateway?.emitToUser(userId, {
+      id: doc._id.toString(),
+      type: doc.type,
+      title: doc.title,
+      message: doc.message,
+      kidId: doc.kidId?.toString(),
+      relatedId: doc.relatedId?.toString(),
+      relatedType: doc.relatedType,
+      createdAt: doc.createdAt,
+    });
+    return doc;
+  }
+
+  /** All distinct parents of kids enrolled in the class. */
+  async notifyParentsInClass(
+    classId: string,
+    type: NotificationType,
+    title: string,
+    message: string,
+    opts?: { relatedId?: string; relatedType?: string },
+  ): Promise<void> {
+    const memberships = await this.classMembershipModel
+      .find({
+        classId: new Types.ObjectId(classId),
+        isActive: true,
+      })
+      .populate('kidId')
+      .exec();
+
+    const parentIds = new Set<string>();
+    for (const m of memberships) {
+      const kid = m.kidId as unknown as KidDocument;
+      if (kid?.parentId) {
+        parentIds.add(kid.parentId.toString());
+      }
+    }
+
+    for (const pid of parentIds) {
+      await this.createForUser(pid, type, title, message, {
+        relatedId: opts?.relatedId ?? classId,
+        relatedType: opts?.relatedType ?? 'class',
+      });
+    }
+  }
+
+  async notifyParentOfKid(
+    kidId: string,
+    type: NotificationType,
+    title: string,
+    message: string,
+    opts?: {
+      relatedId?: string;
+      relatedType?: string;
+    },
+  ): Promise<void> {
+    const kid = await this.kidModel.findById(kidId).exec();
+    if (!kid) {
+      return;
+    }
+    await this.createForUser(
+      kid.parentId.toString(),
+      type,
+      title,
+      message,
+      {
+        kidId,
+        relatedId: opts?.relatedId,
+        relatedType: opts?.relatedType,
+      },
+    );
+  }
 
   async getNotifications(
     userId: string,
@@ -55,7 +161,7 @@ export class NotificationsService {
       .exec();
 
     if (!notification) {
-      throw new Error('Notification not found');
+      throw new NotFoundException('Notification not found');
     }
 
     if (notification.status === NotificationStatus.READ) {

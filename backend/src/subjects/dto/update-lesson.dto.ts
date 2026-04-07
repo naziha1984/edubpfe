@@ -11,6 +11,10 @@ export class UpdateLessonDto {
   @IsOptional()
   subjectId?: string;
 
+  @IsMongoId()
+  @IsOptional()
+  classId?: string;
+
   @IsString()
   @IsOptional()
   title?: string;

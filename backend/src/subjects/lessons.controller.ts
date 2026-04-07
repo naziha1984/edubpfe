@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   Post,
@@ -10,7 +11,12 @@ import {
   HttpCode,
   HttpStatus,
   NotFoundException,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 import { LessonsService } from './lessons.service';
 import { SubjectsService } from './subjects.service';
 import { CreateLessonDto } from './dto/create-lesson.dto';
@@ -19,6 +25,9 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/schemas/user.schema';
+import { lessonFilesMulterOptions } from './lesson-upload.config';
+import { mapLessonToJson } from './lesson-response.util';
+import { GetUser } from '../auth/decorators/get-user.decorator';
 
 @Controller('lessons')
 export class LessonsController {
@@ -27,95 +36,111 @@ export class LessonsController {
     private readonly subjectsService: SubjectsService,
   ) {}
 
-  // Admin endpoints
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createLessonDto: CreateLessonDto) {
+  @UseInterceptors(FilesInterceptor('files', 20, lessonFilesMulterOptions))
+  async create(
+    @UploadedFiles() files: Express.Multer.File[],
+    @Body() body: Record<string, string>,
+    @GetUser() user: { id: string },
+  ) {
+    const dto = plainToInstance(CreateLessonDto, {
+      subjectId: body.subjectId,
+      classId: body.classId,
+      title: body.title,
+      description: body.description,
+      content: body.content,
+      order: body.order == null || body.order === '' ? undefined : Number(body.order),
+      level: body.level,
+      language: body.language,
+      isActive:
+        body.isActive == null || body.isActive === ''
+          ? undefined
+          : body.isActive === 'true',
+    });
+    const errors = await validate(dto);
+    if (errors.length > 0) {
+      throw new BadRequestException(
+        errors.map((e) => Object.values(e.constraints ?? {})).flat(),
+      );
+    }
+
     // Verify subject exists
     const subject = await this.subjectsService.findOne(
-      createLessonDto.subjectId,
+      dto.subjectId,
     );
     if (!subject) {
       throw new NotFoundException('Subject not found');
     }
 
-    const lesson = await this.lessonsService.create(createLessonDto);
-    return {
-      id: lesson._id.toString(),
-      subjectId: lesson.subjectId.toString(),
-      title: lesson.title,
-      description: lesson.description,
-      content: lesson.content,
-      order: lesson.order,
-      level: lesson.level,
-      language: lesson.language,
-      isActive: lesson.isActive,
-      createdAt: lesson.createdAt,
-      updatedAt: lesson.updatedAt,
-    };
+    const lesson = await this.lessonsService.create(
+      dto,
+      files ?? [],
+      user.id,
+    );
+    return mapLessonToJson(lesson);
   }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
   async findOne(@Param('id') id: string) {
     const lesson = await this.lessonsService.findOne(id);
     if (!lesson) {
       throw new NotFoundException('Lesson not found');
     }
-    return {
-      id: lesson._id.toString(),
-      subjectId: lesson.subjectId.toString(),
-      title: lesson.title,
-      description: lesson.description,
-      content: lesson.content,
-      order: lesson.order,
-      level: lesson.level,
-      language: lesson.language,
-      isActive: lesson.isActive,
-      createdAt: lesson.createdAt,
-      updatedAt: lesson.updatedAt,
-    };
+    return mapLessonToJson(lesson);
   }
 
   @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
+  @UseInterceptors(FilesInterceptor('files', 20, lessonFilesMulterOptions))
   async update(
     @Param('id') id: string,
-    @Body() updateLessonDto: UpdateLessonDto,
+    @UploadedFiles() files: Express.Multer.File[],
+    @Body() body: Record<string, string>,
   ) {
+    const dto = plainToInstance(UpdateLessonDto, {
+      subjectId: body.subjectId,
+      classId: body.classId,
+      title: body.title,
+      description: body.description,
+      content: body.content,
+      order: body.order == null || body.order === '' ? undefined : Number(body.order),
+      level: body.level,
+      language: body.language,
+      isActive:
+        body.isActive == null || body.isActive === ''
+          ? undefined
+          : body.isActive === 'true',
+    });
+    const errors = await validate(dto);
+    if (errors.length > 0) {
+      throw new BadRequestException(
+        errors.map((e) => Object.values(e.constraints ?? {})).flat(),
+      );
+    }
+
     // If subjectId is being updated, verify it exists
-    if (updateLessonDto.subjectId) {
+    if (dto.subjectId) {
       const subject = await this.subjectsService.findOne(
-        updateLessonDto.subjectId,
+        dto.subjectId,
       );
       if (!subject) {
         throw new NotFoundException('Subject not found');
       }
     }
 
-    const lesson = await this.lessonsService.update(id, updateLessonDto);
-    return {
-      id: lesson._id.toString(),
-      subjectId: lesson.subjectId.toString(),
-      title: lesson.title,
-      description: lesson.description,
-      content: lesson.content,
-      order: lesson.order,
-      level: lesson.level,
-      language: lesson.language,
-      isActive: lesson.isActive,
-      createdAt: lesson.createdAt,
-      updatedAt: lesson.updatedAt,
-    };
+    const lesson = await this.lessonsService.update(id, dto, files ?? []);
+    return mapLessonToJson(lesson);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string) {
     await this.lessonsService.remove(id);
