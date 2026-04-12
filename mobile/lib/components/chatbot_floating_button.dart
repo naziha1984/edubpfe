@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../main.dart';
 
@@ -162,13 +163,28 @@ class _ChatbotPanelState extends State<_ChatbotPanel> {
           const Divider(height: 1),
           Expanded(
             child: _messages.isEmpty
-                ? const Center(
+                ? Center(
                     child: Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Text(
-                        'Pose une question au chatbot.\n'
-                        'Tu dois être connecté (compte parent / enseignant ou session enfant avec PIN).',
-                        textAlign: TextAlign.center,
+                      padding: const EdgeInsets.all(20),
+                      child: Consumer<AuthProvider>(
+                        builder: (context, auth, _) {
+                          final loggedIn = auth.isAuthenticated;
+                          final hasKid =
+                              Provider.of<ApiService>(context, listen: false)
+                                  .kidToken !=
+                              null;
+                          if (loggedIn || hasKid) {
+                            return const Text(
+                              'Pose une question au chatbot ci-dessous, puis envoie ton message.',
+                              textAlign: TextAlign.center,
+                            );
+                          }
+                          return const Text(
+                            'Pose une question au chatbot.\n'
+                            'Connecte-toi (parent / enseignant) ou ouvre une session enfant (PIN) pour envoyer des messages.',
+                            textAlign: TextAlign.center,
+                          );
+                        },
                       ),
                     ),
                   )

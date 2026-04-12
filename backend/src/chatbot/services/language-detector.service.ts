@@ -16,7 +16,12 @@ export class LanguageDetectorService {
       return 'ar';
     }
 
-    // 检测法语关键词
+    const trimmed = lowerText.trim();
+    if (/^(bnj|bjr|bsr|slt|cc|cv)\b/.test(trimmed)) {
+      return 'fr';
+    }
+
+    // 检测法语关键词（ élève / matière 等无重音形式一并匹配）
     const frenchKeywords = [
       'bonjour',
       'salut',
@@ -46,9 +51,33 @@ export class LanguageDetectorService {
       'avoir',
       'faire',
       'aller',
+      'veux',
+      'voulez',
+      'ajouter',
+      'enfant',
+      'enfants',
+      'compte',
+      'connexion',
+      'inscription',
+      'mot de passe',
+      'enseignant',
+      'professeur',
+      'élève',
+      'eleve',
+      'cours',
+      'classe',
+      'matière',
+      'matiere',
+      'devoir',
+      'quiz',
+      'leçon',
+      'lecon',
+      'parent',
+      'code pin',
+      'pin',
     ];
 
-    const frenchScore = frenchKeywords.reduce((score, keyword) => {
+    let frenchScore = frenchKeywords.reduce((score, keyword) => {
       return score + (lowerText.includes(keyword) ? 1 : 0);
     }, 0);
 
@@ -91,12 +120,17 @@ export class LanguageDetectorService {
       return score + (lowerText.includes(keyword) ? 1 : 0);
     }, 0);
 
-    // 如果法语关键词明显多于英语，返回法语
-    if (frenchScore > englishScore && frenchScore > 2) {
-      return 'fr';
+    if (/[àâäéèêëïîôùûçœæ]/i.test(text)) {
+      frenchScore += 2;
     }
 
-    // 默认返回英语
+    if (frenchScore > englishScore) {
+      return 'fr';
+    }
+    if (englishScore > frenchScore) {
+      return 'en';
+    }
+
     return 'en';
   }
 

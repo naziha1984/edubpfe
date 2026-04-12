@@ -12,10 +12,7 @@ import { ChatbotService } from './chatbot.service';
 import { KidAuthGuard } from '../kids/guards/kid-auth.guard';
 import { GetKid } from '../kids/decorators/get-kid.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-
-export class SendMessageDto {
-  message: string;
-}
+import { SendMessageDto } from './dto/send-message.dto';
 
 @Controller('chatbot')
 export class ChatbotController {
