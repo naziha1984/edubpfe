@@ -2,18 +2,18 @@ import {
   Injectable,
   ForbiddenException,
   NotFoundException,
-} from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+} from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model, Types } from "mongoose";
 import {
   LiveSession,
   LiveSessionDocument,
   LiveSessionStatus,
-} from './schemas/live-session.schema';
-import { CreateLiveSessionDto } from './dto/create-live-session.dto';
-import { ClassesService } from '../classes/classes.service';
-import { NotificationsService } from '../notifications/notifications.service';
-import { NotificationType } from '../notifications/schemas/notification.schema';
+} from "./schemas/live-session.schema";
+import { CreateLiveSessionDto } from "./dto/create-live-session.dto";
+import { ClassesService } from "../classes/classes.service";
+import { NotificationsService } from "../notifications/notifications.service";
+import { NotificationType } from "../notifications/schemas/notification.schema";
 
 @Injectable()
 export class LiveSessionsService {
@@ -35,7 +35,7 @@ export class LiveSessionsService {
     );
     if (!isOwner) {
       throw new ForbiddenException(
-        'You can only create live sessions for your own classes',
+        "You can only create live sessions for your own classes",
       );
     }
 
@@ -52,11 +52,11 @@ export class LiveSessionsService {
     await this.notificationsService.notifyParentsInClass(
       createLiveSessionDto.classId,
       NotificationType.LIVE_SESSION_SCHEDULED,
-      'Live lesson scheduled',
+      "Live lesson scheduled",
       `"${saved.title}" is scheduled. Open the app for details.`,
       {
         relatedId: saved._id.toString(),
-        relatedType: 'live_session',
+        relatedType: "live_session",
       },
     );
 
@@ -70,7 +70,7 @@ export class LiveSessionsService {
   ): Promise<LiveSessionDocument> {
     const session = await this.liveSessionModel.findById(sessionId).exec();
     if (!session || session.classId.toString() !== classId) {
-      throw new NotFoundException('Live session not found');
+      throw new NotFoundException("Live session not found");
     }
     const isOwner = await this.classesService.checkOwnership(
       classId,
@@ -78,7 +78,7 @@ export class LiveSessionsService {
     );
     if (!isOwner) {
       throw new ForbiddenException(
-        'You can only start live sessions for your own classes',
+        "You can only start live sessions for your own classes",
       );
     }
     session.status = LiveSessionStatus.LIVE;
@@ -87,11 +87,11 @@ export class LiveSessionsService {
     await this.notificationsService.notifyParentsInClass(
       classId,
       NotificationType.LIVE_SESSION_STARTED,
-      'Live class now',
+      "Live class now",
       `"${session.title}" is live — your child can join.`,
       {
         relatedId: session._id.toString(),
-        relatedType: 'live_session',
+        relatedType: "live_session",
       },
     );
 
@@ -108,7 +108,7 @@ export class LiveSessionsService {
     );
     if (!isOwner) {
       throw new ForbiddenException(
-        'You can only view live sessions for your own classes',
+        "You can only view live sessions for your own classes",
       );
     }
 
@@ -134,7 +134,7 @@ export class LiveSessionsService {
         isActive: true,
         status: { $in: [LiveSessionStatus.SCHEDULED, LiveSessionStatus.LIVE] },
       })
-      .populate('classId', 'name')
+      .populate("classId", "name")
       .sort({ scheduledAt: 1 })
       .exec();
   }

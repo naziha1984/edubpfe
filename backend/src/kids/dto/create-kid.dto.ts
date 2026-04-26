@@ -3,7 +3,10 @@ import {
   IsNotEmpty,
   IsOptional,
   IsDateString,
-} from 'class-validator';
+  IsInt,
+  Min,
+  Max,
+} from "class-validator";
 
 export class CreateKidDto {
   @IsString()
@@ -25,4 +28,9 @@ export class CreateKidDto {
   @IsString()
   @IsOptional()
   school?: string;
+
+  @IsInt()
+  @Min(1)
+  @Max(6)
+  schoolLevel: number;
 }

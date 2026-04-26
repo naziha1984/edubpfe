@@ -4,8 +4,9 @@ import '../providers/auth_provider.dart';
 import '../pages/welcome_page_v2.dart';
 import '../pages/login_page_v2.dart';
 import '../pages/kids_list_page.dart';
-import '../pages/admin_home_screen.dart';
-import '../pages/teacher_home_screen.dart';
+import '../pages/parent_dashboard_screen.dart';
+import '../pages/admin_dashboard_screen.dart';
+import '../pages/teacher_dashboard_screen.dart';
 import '../ui/transitions/page_transitions.dart';
 
 class AppRouter {
@@ -13,7 +14,7 @@ class AppRouter {
   /// Règles de routing:
   /// - ADMIN -> AdminHomePage
   /// - TEACHER -> TeacherHomePage
-  /// - PARENT -> KidsListPage (ParentHome)
+  /// - PARENT -> ParentDashboardScreen
   static Widget getHomePage(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.user;
@@ -39,15 +40,15 @@ class AppRouter {
     // Routing basé sur le rôle - ordre de priorité: ADMIN > TEACHER > PARENT
     Widget targetPage;
     if (user.isAdmin) {
-      debugPrint('🔀 [AppRouter] ✅ Routing to: AdminHomeScreen');
-      targetPage = const AdminHomeScreen();
+      debugPrint('🔀 [AppRouter] ✅ Routing to: AdminDashboardScreen');
+      targetPage = const AdminDashboardScreen();
     } else if (user.isTeacher) {
-      debugPrint('🔀 [AppRouter] ✅ Routing to: TeacherHomeScreen');
-      targetPage = const TeacherHomeScreen();
+      debugPrint('🔀 [AppRouter] ✅ Routing to: TeacherDashboardScreen');
+      targetPage = const TeacherDashboardScreen();
     } else {
       // Par défaut, parent (ou rôle non reconnu -> traité comme parent)
-      debugPrint('🔀 [AppRouter] ✅ Routing to: KidsListPage (ParentHome)');
-      targetPage = const KidsListPage();
+      debugPrint('🔀 [AppRouter] ✅ Routing to: ParentDashboardScreen');
+      targetPage = const ParentDashboardScreen();
     }
 
     debugPrint('🔀 [AppRouter] ======================================');
@@ -85,14 +86,14 @@ class AppRouter {
     // Déterminer la page cible selon le rôle
     Widget targetPage;
     if (user.isAdmin) {
-      debugPrint('🔀 [AppRouter] ✅ Post-login routing to: AdminHomeScreen');
-      targetPage = const AdminHomeScreen();
+      debugPrint('🔀 [AppRouter] ✅ Post-login routing to: AdminDashboardScreen');
+      targetPage = const AdminDashboardScreen();
     } else if (user.isTeacher) {
-      debugPrint('🔀 [AppRouter] ✅ Post-login routing to: TeacherHomeScreen');
-      targetPage = const TeacherHomeScreen();
+      debugPrint('🔀 [AppRouter] ✅ Post-login routing to: TeacherDashboardScreen');
+      targetPage = const TeacherDashboardScreen();
     } else {
-      debugPrint('🔀 [AppRouter] ✅ Post-login routing to: KidsListPage (ParentHome)');
-      targetPage = const KidsListPage();
+      debugPrint('🔀 [AppRouter] ✅ Post-login routing to: ParentDashboardScreen');
+      targetPage = const ParentDashboardScreen();
     }
 
     debugPrint('🔀 [AppRouter] =========================================');

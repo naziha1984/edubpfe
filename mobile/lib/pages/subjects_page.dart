@@ -13,11 +13,13 @@ import 'kid_rewards_screen.dart';
 class SubjectsPage extends StatefulWidget {
   final String kidId;
   final String kidName;
+  final int? schoolLevel;
 
   const SubjectsPage({
     super.key,
     required this.kidId,
     required this.kidName,
+    this.schoolLevel,
   });
 
   @override
@@ -128,6 +130,7 @@ class _SubjectsPageState extends State<SubjectsPage> {
                                           kidName: widget.kidName,
                                           subjectId: sid,
                                           subjectName: sname,
+                                          schoolLevel: widget.schoolLevel,
                                         ),
                                       ),
                                     );

@@ -4,7 +4,7 @@ import {
   IsNumber,
   IsBoolean,
   IsMongoId,
-} from 'class-validator';
+} from "class-validator";
 
 export class UpdateLessonDto {
   @IsMongoId()

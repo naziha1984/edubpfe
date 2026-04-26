@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
 
 export type ClassMembershipDocument = ClassMembership &
   Document & {
@@ -9,10 +9,10 @@ export type ClassMembershipDocument = ClassMembership &
 
 @Schema({ timestamps: true })
 export class ClassMembership {
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Class' })
+  @Prop({ required: true, type: Types.ObjectId, ref: "Class" })
   classId: Types.ObjectId;
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Kid' })
+  @Prop({ required: true, type: Types.ObjectId, ref: "Kid" })
   kidId: Types.ObjectId;
 
   @Prop({ default: true })

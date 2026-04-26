@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document } from "mongoose";
 
 export type UserDocument = User &
   Document & {
@@ -8,9 +8,15 @@ export type UserDocument = User &
   };
 
 export enum UserRole {
-  PARENT = 'PARENT',
-  TEACHER = 'TEACHER',
-  ADMIN = 'ADMIN',
+  PARENT = "PARENT",
+  TEACHER = "TEACHER",
+  ADMIN = "ADMIN",
+}
+
+export enum TeacherApprovalStatus {
+  PENDING = "PENDING",
+  ACCEPTED = "ACCEPTED",
+  REJECTED = "REJECTED",
 }
 
 @Schema({ timestamps: true })
@@ -32,6 +38,36 @@ export class User {
 
   @Prop({ default: true })
   isActive: boolean;
+
+  @Prop()
+  specialty?: string;
+
+  @Prop()
+  bio?: string;
+
+  @Prop()
+  profilePhotoUrl?: string;
+
+  @Prop({ default: 0 })
+  ratingAvg?: number;
+
+  @Prop({ default: 0 })
+  ratingCount?: number;
+
+  @Prop()
+  cvUrl?: string;
+
+  @Prop({
+    enum: TeacherApprovalStatus,
+    default: TeacherApprovalStatus.ACCEPTED,
+  })
+  approvalStatus: TeacherApprovalStatus;
+
+  @Prop()
+  rejectionReason?: string;
+
+  @Prop()
+  submittedAt?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

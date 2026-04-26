@@ -15,7 +15,7 @@ class AuthProvider with ChangeNotifier {
   bool get isAuthenticated => _token != null;
   String? get _token => _apiService.token;
 
-  // Role helpers
+  // Helpers liés au rôle
   bool get isAdmin => _userModel?.isAdmin ?? false;
   bool get isTeacher => _userModel?.isTeacher ?? false;
   bool get isParent => _userModel?.isParent ?? false;
@@ -28,6 +28,8 @@ class AuthProvider with ChangeNotifier {
     required String firstName,
     required String lastName,
     String role = 'PARENT',
+    Uint8List? cvBytes,
+    String? cvFileName,
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -39,6 +41,8 @@ class AuthProvider with ChangeNotifier {
         firstName: firstName,
         lastName: lastName,
         role: role,
+        cvBytes: cvBytes,
+        cvFileName: cvFileName,
       );
 
       if (response['access_token'] != null) {
@@ -93,7 +97,7 @@ class AuthProvider with ChangeNotifier {
       
       _userModel = UserModel.fromJson(userData);
       
-      // Debug log pour vérifier le rôle
+      // Journaux de debug pour vérifier le rôle
       debugPrint('🔐 [AuthProvider] ========== USER PROFILE LOADED ==========');
       debugPrint('🔐 [AuthProvider] User ID: ${_userModel?.id}');
       debugPrint('🔐 [AuthProvider] User Name: ${_userModel?.fullName}');
@@ -109,7 +113,7 @@ class AuthProvider with ChangeNotifier {
     } catch (e) {
       debugPrint('❌ [AuthProvider] Error loading profile: $e');
       debugPrint('❌ [AuthProvider] Stack trace: ${StackTrace.current}');
-      // Handle error
+      // Laisser l'appelant gérer l'erreur si nécessaire
     }
   }
 

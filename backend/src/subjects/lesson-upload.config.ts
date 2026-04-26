@@ -1,10 +1,10 @@
-import { existsSync, mkdirSync } from 'fs';
-import { extname, join } from 'path';
-import { diskStorage } from 'multer';
+import { existsSync, mkdirSync } from "fs";
+import { extname, join } from "path";
+import { diskStorage } from "multer";
 
-export const LESSONS_UPLOAD_SUBDIR = 'lessons';
+export const LESSONS_UPLOAD_SUBDIR = "lessons";
 
-const uploadDir = join(process.cwd(), 'uploads', LESSONS_UPLOAD_SUBDIR);
+const uploadDir = join(process.cwd(), "uploads", LESSONS_UPLOAD_SUBDIR);
 
 export const lessonFilesMulterOptions = {
   storage: diskStorage({

@@ -1,10 +1,10 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
-import { LiveSessionsService } from './live-sessions.service';
-import { LiveSessionStatus } from './schemas/live-session.schema';
-import { KidAuthGuard } from '../kids/guards/kid-auth.guard';
-import { GetKid } from '../kids/decorators/get-kid.decorator';
+import { Controller, Get, UseGuards } from "@nestjs/common";
+import { LiveSessionsService } from "./live-sessions.service";
+import { LiveSessionStatus } from "./schemas/live-session.schema";
+import { KidAuthGuard } from "../kids/guards/kid-auth.guard";
+import { GetKid } from "../kids/decorators/get-kid.decorator";
 
-@Controller('kid/live-sessions')
+@Controller("kid/live-sessions")
 @UseGuards(KidAuthGuard)
 export class KidLiveSessionsController {
   constructor(private readonly liveSessionsService: LiveSessionsService) {}

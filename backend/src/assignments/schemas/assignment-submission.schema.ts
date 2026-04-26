@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
 
 export type AssignmentSubmissionDocument = AssignmentSubmission &
   Document & {
@@ -8,23 +8,23 @@ export type AssignmentSubmissionDocument = AssignmentSubmission &
   };
 
 export enum SubmissionStatus {
-  ASSIGNED = 'ASSIGNED',
-  IN_PROGRESS = 'IN_PROGRESS',
-  COMPLETED = 'COMPLETED',
+  ASSIGNED = "ASSIGNED",
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED",
 }
 
 @Schema({ timestamps: true })
 export class AssignmentSubmission {
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Assignment' })
+  @Prop({ required: true, type: Types.ObjectId, ref: "Assignment" })
   assignmentId: Types.ObjectId;
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Kid' })
+  @Prop({ required: true, type: Types.ObjectId, ref: "Kid" })
   kidId: Types.ObjectId;
 
   @Prop({ default: SubmissionStatus.ASSIGNED, enum: SubmissionStatus })
   status: SubmissionStatus;
 
-  @Prop({ type: Types.ObjectId, ref: 'QuizSession' })
+  @Prop({ type: Types.ObjectId, ref: "QuizSession" })
   quizSessionId?: Types.ObjectId;
 
   @Prop()

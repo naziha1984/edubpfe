@@ -3,24 +3,26 @@ import {
   NotFoundException,
   ForbiddenException,
   ConflictException,
-} from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+} from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model, Types } from "mongoose";
 import {
   Assignment,
   AssignmentDocument,
-} from '../notifications/schemas/assignment.schema';
+} from "../notifications/schemas/assignment.schema";
 import {
   AssignmentSubmission,
   AssignmentSubmissionDocument,
   SubmissionStatus,
-} from './schemas/assignment-submission.schema';
-import { CreateAssignmentDto } from './dto/create-assignment.dto';
-import { ClassesService } from '../classes/classes.service';
-import { ASSIGNMENTS_UPLOAD_SUBDIR } from './assignment-upload.config';
-import { mapAssignmentAttachment } from './assignment-response.util';
-import { NotificationsService } from '../notifications/notifications.service';
-import { NotificationType } from '../notifications/schemas/notification.schema';
+} from "./schemas/assignment-submission.schema";
+import { CreateAssignmentDto } from "./dto/create-assignment.dto";
+import { ClassesService } from "../classes/classes.service";
+import { ASSIGNMENTS_UPLOAD_SUBDIR } from "./assignment-upload.config";
+import { mapAssignmentAttachment } from "./assignment-response.util";
+import { NotificationsService } from "../notifications/notifications.service";
+import { NotificationType } from "../notifications/schemas/notification.schema";
+import { Kid, KidDocument } from "../kids/schemas/kid.schema";
+import { RewardsService } from "../rewards/rewards.service";
 
 @Injectable()
 export class AssignmentsService {
@@ -31,6 +33,8 @@ export class AssignmentsService {
     private submissionModel: Model<AssignmentSubmissionDocument>,
     private classesService: ClassesService,
     private notificationsService: NotificationsService,
+    @InjectModel(Kid.name) private readonly kidModel: Model<KidDocument>,
+    private readonly rewardsService: RewardsService,
   ) {}
 
   async createAssignment(
@@ -38,14 +42,14 @@ export class AssignmentsService {
     teacherId: string,
     uploadedFiles: Express.Multer.File[] = [],
   ): Promise<AssignmentDocument> {
-    // Verify class ownership
+    // Vérifier que la classe appartient bien à l'enseignant
     const isOwner = await this.classesService.checkOwnership(
       createAssignmentDto.classId,
       teacherId,
     );
     if (!isOwner) {
       throw new ForbiddenException(
-        'You can only create assignments for your own classes',
+        "You can only create assignments for your own classes",
       );
     }
 
@@ -70,7 +74,7 @@ export class AssignmentsService {
 
     const savedAssignment = await assignment.save();
 
-    // Create submissions for all class members
+    // Créer une remise pour chaque membre de la classe
     const members = await this.classesService.getClassMembers(
       createAssignmentDto.classId,
       teacherId,
@@ -86,11 +90,11 @@ export class AssignmentsService {
     await this.notificationsService.notifyParentsInClass(
       createAssignmentDto.classId,
       NotificationType.ASSIGNMENT_CREATED,
-      'New assignment',
+      "New assignment",
       `A new assignment "${savedAssignment.title}" was posted for your child’s class.`,
       {
         relatedId: savedAssignment._id.toString(),
-        relatedType: 'assignment',
+        relatedType: "assignment",
       },
     );
 
@@ -107,13 +111,13 @@ export class AssignmentsService {
     );
     if (!isOwner) {
       throw new ForbiddenException(
-        'You can only view assignments for your own classes',
+        "You can only view assignments for your own classes",
       );
     }
 
     return this.assignmentModel
       .find({ classId: new Types.ObjectId(classId) })
-      .populate('lessonId', 'title')
+      .populate("lessonId", "title")
       .sort({ dueDate: 1 })
       .exec();
   }
@@ -121,7 +125,7 @@ export class AssignmentsService {
   async getAssignmentSubmissions(assignmentId: string, teacherId: string) {
     const assignment = await this.assignmentModel.findById(assignmentId).exec();
     if (!assignment) {
-      throw new NotFoundException('Assignment not found');
+      throw new NotFoundException("Assignment not found");
     }
 
     const isOwner = await this.classesService.checkOwnership(
@@ -130,19 +134,19 @@ export class AssignmentsService {
     );
     if (!isOwner) {
       throw new ForbiddenException(
-        'You can only view submissions for your own assignments',
+        "You can only view submissions for your own assignments",
       );
     }
 
     return this.submissionModel
       .find({ assignmentId: new Types.ObjectId(assignmentId) })
-      .populate('kidId', 'firstName lastName')
-      .populate('quizSessionId')
+      .populate("kidId", "firstName lastName")
+      .populate("quizSessionId")
       .exec();
   }
 
   async getKidAssignments(kidId: string): Promise<any[]> {
-    // Get all classes the kid belongs to
+    // Récupérer toutes les classes auxquelles l'enfant appartient
     const classes = await this.classesService.getKidClasses(kidId);
     const classIds = classes.map((c) => c._id);
 
@@ -150,14 +154,14 @@ export class AssignmentsService {
       return [];
     }
 
-    // Get all assignments for these classes
+    // Récupérer tous les devoirs de ces classes
     const assignments = await this.assignmentModel
       .find({ classId: { $in: classIds }, isActive: true })
-      .populate('lessonId', 'title')
+      .populate("lessonId", "title")
       .sort({ dueDate: 1 })
       .exec();
 
-    // Get submissions for this kid
+    // Récupérer les remises pour cet enfant
     const assignmentIds = assignments.map((a) => a._id);
     const submissions = await this.submissionModel
       .find({
@@ -170,7 +174,7 @@ export class AssignmentsService {
       submissions.map((s) => [s.assignmentId.toString(), s]),
     );
 
-    // Combine assignments with their submissions
+    // Fusionner les devoirs avec leurs remises
     return assignments.map((assignment) => {
       const submission = submissionMap.get(assignment._id.toString());
       return {
@@ -213,19 +217,19 @@ export class AssignmentsService {
   ): Promise<AssignmentSubmissionDocument> {
     const assignment = await this.assignmentModel.findById(assignmentId).exec();
     if (!assignment) {
-      throw new NotFoundException('Assignment not found');
+      throw new NotFoundException("Assignment not found");
     }
 
-    // Verify kid belongs to the class
+    // Vérifier que l'enfant appartient à la classe
     const classes = await this.classesService.getKidClasses(kidId);
     const classIds = classes.map((c) => c._id.toString());
     if (!classIds.includes(assignment.classId.toString())) {
       throw new ForbiddenException(
-        'You can only start assignments for your classes',
+        "You can only start assignments for your classes",
       );
     }
 
-    // Find or create submission
+    // Rechercher ou créer la remise
     let submission = await this.submissionModel
       .findOne({
         assignmentId: new Types.ObjectId(assignmentId),
@@ -234,7 +238,7 @@ export class AssignmentsService {
       .exec();
 
     if (!submission) {
-      // Create submission if it doesn't exist
+      // Créer la remise si elle n'existe pas
       submission = await this.submissionModel.create({
         assignmentId: new Types.ObjectId(assignmentId),
         kidId: new Types.ObjectId(kidId),
@@ -242,9 +246,9 @@ export class AssignmentsService {
         startedAt: new Date(),
       });
     } else {
-      // Update existing submission
+      // Mettre à jour la remise existante
       if (submission.status === SubmissionStatus.COMPLETED) {
-        throw new ConflictException('Assignment already completed');
+        throw new ConflictException("Assignment already completed");
       }
       submission.status = SubmissionStatus.IN_PROGRESS;
       if (!submission.startedAt) {
@@ -264,19 +268,19 @@ export class AssignmentsService {
   ): Promise<AssignmentSubmissionDocument> {
     const assignment = await this.assignmentModel.findById(assignmentId).exec();
     if (!assignment) {
-      throw new NotFoundException('Assignment not found');
+      throw new NotFoundException("Assignment not found");
     }
 
-    // Verify kid belongs to the class
+    // Vérifier que l'enfant appartient à la classe
     const classes = await this.classesService.getKidClasses(kidId);
     const classIds = classes.map((c) => c._id.toString());
     if (!classIds.includes(assignment.classId.toString())) {
       throw new ForbiddenException(
-        'You can only submit assignments for your classes',
+        "You can only submit assignments for your classes",
       );
     }
 
-    // Find submission
+    // Rechercher la remise
     const submission = await this.submissionModel
       .findOne({
         assignmentId: new Types.ObjectId(assignmentId),
@@ -286,15 +290,15 @@ export class AssignmentsService {
 
     if (!submission) {
       throw new NotFoundException(
-        'Assignment submission not found. Please start the assignment first.',
+        "Assignment submission not found. Please start the assignment first.",
       );
     }
 
     if (submission.status === SubmissionStatus.COMPLETED) {
-      throw new ConflictException('Assignment already completed');
+      throw new ConflictException("Assignment already completed");
     }
 
-    // Update submission
+    // Mettre à jour la remise
     submission.status = SubmissionStatus.COMPLETED;
     submission.submittedAt = new Date();
     if (quizSessionId) {
@@ -309,17 +313,47 @@ export class AssignmentsService {
 
     await submission.save();
 
+    // Bonus : devoir remis à temps -> +10 points
+    // Idempotence : sourceId = submissionId, donc un retry ne duplique pas les points.
+    const onTime =
+      submission.submittedAt != null &&
+      assignment.dueDate != null &&
+      submission.submittedAt.getTime() <= assignment.dueDate.getTime();
+
+    const kid = await this.kidModel
+      .findById(kidId)
+      .select("firstName lastName")
+      .exec();
+    const studentName = kid
+      ? `${kid.firstName ?? ""} ${kid.lastName ?? ""}`.trim()
+      : "Student";
+
+    const submittedAtIso = submission.submittedAt?.toISOString();
+
     await this.notificationsService.createForUser(
       assignment.teacherId.toString(),
       NotificationType.ASSIGNMENT_SUBMITTED,
-      'Assignment submitted',
-      'A student submitted their work for your assignment.',
+      "Homework submitted",
+      `${studentName} submitted "${assignment.title}"${
+        submittedAtIso ? ` at ${submittedAtIso}` : ""
+      }.`,
       {
         kidId,
         relatedId: assignment._id.toString(),
-        relatedType: 'assignment',
+        relatedType: "assignment",
       },
     );
+
+    if (onTime) {
+      await this.rewardsService.addXP(
+        kidId,
+        10,
+        "homework_on_time",
+        submission._id.toString(),
+        `Homework on time: ${assignment.title}`,
+      );
+      await this.rewardsService.updateStreak(kidId);
+    }
 
     return submission;
   }

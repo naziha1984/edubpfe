@@ -116,6 +116,12 @@ class EduBridgeTypography {
         height: 1.45,
       );
 
+  // Product-level semantic aliases for dashboards/cards/lists.
+  static TextStyle get metricValue => titleLarge.copyWith(fontWeight: FontWeight.w800);
+  static TextStyle get metricLabel => bodySmall.copyWith(fontWeight: FontWeight.w500);
+  static TextStyle get cardTitle => titleMedium.copyWith(fontWeight: FontWeight.w700);
+  static TextStyle get sectionTitle => headlineSmall.copyWith(fontWeight: FontWeight.w700);
+
   // Styles spéciaux pour l'arabe
   static TextStyle arabicText({
     double fontSize = 16,

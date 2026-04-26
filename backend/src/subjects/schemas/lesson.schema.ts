@@ -1,11 +1,17 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
 
 export type LessonDocument = Lesson &
   Document & {
     createdAt: Date;
     updatedAt: Date;
   };
+
+export enum LessonModerationStatus {
+  APPROVED = "APPROVED",
+  FLAGGED = "FLAGGED",
+  HIDDEN = "HIDDEN",
+}
 
 @Schema({ timestamps: true })
 export class LessonAttachment {
@@ -30,15 +36,15 @@ export const LessonAttachmentSchema =
 
 @Schema({ timestamps: true })
 export class Lesson {
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Subject' })
+  @Prop({ required: true, type: Types.ObjectId, ref: "Subject" })
   subjectId: Types.ObjectId;
 
   /** Enseignant créateur (JWT admin / teacher). */
-  @Prop({ type: Types.ObjectId, ref: 'User' })
+  @Prop({ type: Types.ObjectId, ref: "User" })
   teacherId?: Types.ObjectId;
 
   /** Optionnel : leçon rattachée à une classe (Tunisie / suivi par groupe). */
-  @Prop({ type: Types.ObjectId, ref: 'Class' })
+  @Prop({ type: Types.ObjectId, ref: "Class" })
   classId?: Types.ObjectId;
 
   @Prop({ required: true })
@@ -61,6 +67,22 @@ export class Lesson {
 
   @Prop({ default: true })
   isActive: boolean;
+
+  @Prop({
+    enum: LessonModerationStatus,
+    default: LessonModerationStatus.APPROVED,
+    index: true,
+  })
+  moderationStatus: LessonModerationStatus;
+
+  @Prop()
+  moderationNote?: string;
+
+  @Prop({ type: Types.ObjectId, ref: "User" })
+  moderatedBy?: Types.ObjectId;
+
+  @Prop()
+  moderatedAt?: Date;
 
   @Prop({ type: [LessonAttachmentSchema], default: [] })
   attachments: LessonAttachment[];

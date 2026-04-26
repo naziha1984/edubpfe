@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   Post,
@@ -6,23 +7,24 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
   HttpCode,
   HttpStatus,
   NotFoundException,
-} from '@nestjs/common';
-import { SubjectsService } from './subjects.service';
-import { LessonsService } from './lessons.service';
-import { CreateSubjectDto } from './dto/create-subject.dto';
-import { UpdateSubjectDto } from './dto/update-subject.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { UserRole } from '../users/schemas/user.schema';
-import { mapLessonToJson } from './lesson-response.util';
-import { QuizQuestionCountService } from './quiz-question-count.service';
+} from "@nestjs/common";
+import { SubjectsService } from "./subjects.service";
+import { LessonsService } from "./lessons.service";
+import { CreateSubjectDto } from "./dto/create-subject.dto";
+import { UpdateSubjectDto } from "./dto/update-subject.dto";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { Roles } from "../auth/decorators/roles.decorator";
+import { UserRole } from "../users/schemas/user.schema";
+import { mapLessonToJson } from "./lesson-response.util";
+import { QuizQuestionCountService } from "./quiz-question-count.service";
 
-@Controller('subjects')
+@Controller("subjects")
 export class SubjectsController {
   constructor(
     private readonly subjectsService: SubjectsService,
@@ -46,14 +48,29 @@ export class SubjectsController {
   }
 
   // Public endpoint
-  @Get(':id/lessons')
-  async findLessonsBySubject(@Param('id') id: string) {
+  @Get(":id/lessons")
+  async findLessonsBySubject(
+    @Param("id") id: string,
+    @Query("schoolLevel") schoolLevel?: string,
+  ) {
     const subject = await this.subjectsService.findOne(id);
     if (!subject) {
-      throw new NotFoundException('Subject not found');
+      throw new NotFoundException("Subject not found");
     }
 
-    const lessons = await this.lessonsService.findAllBySubjectId(id);
+    let parsedSchoolLevel: number | undefined;
+    if (schoolLevel != null && schoolLevel.trim() != "") {
+      const n = Number(schoolLevel);
+      if (!Number.isInteger(n) || n < 1 || n > 6) {
+        throw new BadRequestException("Invalid schoolLevel, expected 1..6");
+      }
+      parsedSchoolLevel = n;
+    }
+
+    const lessons = await this.lessonsService.findAllBySubjectId(
+      id,
+      parsedSchoolLevel,
+    );
     const lessonIds = lessons.map((l) => l._id.toString());
     const counts =
       await this.quizQuestionCountService.countByLessonIds(lessonIds);
@@ -81,13 +98,13 @@ export class SubjectsController {
     };
   }
 
-  @Get('admin/:id')
+  @Get("admin/:id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param("id") id: string) {
     const subject = await this.subjectsService.findOne(id);
     if (!subject) {
-      throw new NotFoundException('Subject not found');
+      throw new NotFoundException("Subject not found");
     }
     return {
       id: subject._id.toString(),
@@ -100,11 +117,11 @@ export class SubjectsController {
     };
   }
 
-  @Put(':id')
+  @Put(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   async update(
-    @Param('id') id: string,
+    @Param("id") id: string,
     @Body() updateSubjectDto: UpdateSubjectDto,
   ) {
     const subject = await this.subjectsService.update(id, updateSubjectDto);
@@ -119,11 +136,11 @@ export class SubjectsController {
     };
   }
 
-  @Delete(':id')
+  @Delete(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string) {
+  async remove(@Param("id") id: string) {
     await this.subjectsService.remove(id);
   }
 }

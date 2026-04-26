@@ -21,6 +21,7 @@ class _AddKidPageState extends State<AddKidPage> {
   final _lastNameController = TextEditingController();
   final _gradeController = TextEditingController();
   final _schoolController = TextEditingController();
+  int? _selectedSchoolLevel;
   bool _isLoading = false;
 
   @override
@@ -45,6 +46,7 @@ class _AddKidPageState extends State<AddKidPage> {
         () => kidsProvider.addKid(
           firstName: _firstNameController.text.trim(),
           lastName: _lastNameController.text.trim(),
+          schoolLevel: _selectedSchoolLevel!,
           grade: _gradeController.text.trim().isEmpty
               ? null
               : _gradeController.text.trim(),
@@ -136,6 +138,26 @@ class _AddKidPageState extends State<AddKidPage> {
                                     ),
                                   ),
                                 ],
+                              ),
+                              const SizedBox(height: 20),
+                              DropdownButtonFormField<int>(
+                                value: _selectedSchoolLevel,
+                                decoration: const InputDecoration(
+                                  labelText: 'School Level',
+                                  prefixIcon: Icon(Icons.stairs_outlined),
+                                ),
+                                items: const [
+                                  DropdownMenuItem(value: 1, child: Text('Year 1')),
+                                  DropdownMenuItem(value: 2, child: Text('Year 2')),
+                                  DropdownMenuItem(value: 3, child: Text('Year 3')),
+                                  DropdownMenuItem(value: 4, child: Text('Year 4')),
+                                  DropdownMenuItem(value: 5, child: Text('Year 5')),
+                                  DropdownMenuItem(value: 6, child: Text('Year 6')),
+                                ],
+                                onChanged: (v) =>
+                                    setState(() => _selectedSchoolLevel = v),
+                                validator: (v) =>
+                                    v == null ? 'School level is required' : null,
                               ),
                               const SizedBox(height: 20),
                               TextFormField(

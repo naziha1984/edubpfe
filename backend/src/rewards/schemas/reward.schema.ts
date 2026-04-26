@@ -1,11 +1,11 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
 
 export type RewardDocument = Reward & Document;
 
 @Schema({ timestamps: true })
 export class Reward {
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Kid' })
+  @Prop({ required: true, type: Types.ObjectId, ref: "Kid" })
   kidId: Types.ObjectId;
 
   @Prop({ default: 0 })
@@ -20,7 +20,7 @@ export class Reward {
   @Prop()
   lastStreakDate?: Date;
 
-  @Prop({ type: [Types.ObjectId], ref: 'Badge', default: [] })
+  @Prop({ type: [Types.ObjectId], ref: "Badge", default: [] })
   badges: Types.ObjectId[];
 }
 

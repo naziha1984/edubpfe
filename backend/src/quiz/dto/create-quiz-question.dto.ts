@@ -6,8 +6,8 @@ import {
   IsOptional,
   IsEnum,
   Min,
-} from 'class-validator';
-import { QuizDifficulty } from '../schemas/quiz-question.schema';
+} from "class-validator";
+import { QuizDifficulty } from "../schemas/quiz-question.schema";
 
 export class CreateQuizQuestionDto {
   @IsString()

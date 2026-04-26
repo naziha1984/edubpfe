@@ -6,6 +6,7 @@ import '../ui/theme/edubridge_typography.dart';
 import '../ui/theme/edubridge_theme.dart';
 import '../ui/components/gradient_button.dart';
 import '../ui/components/glass_card.dart';
+import '../ui/components/ayah_card.dart';
 import '../ui/components/gradient_page_shell.dart';
 import '../ui/transitions/page_transitions.dart';
 import '../providers/app_settings_provider.dart';
@@ -315,6 +316,10 @@ class _WelcomePageV2State extends State<WelcomePageV2>
                                 ),
                               ),
 
+                              const SizedBox(height: 16),
+                              const AyahCard(
+                                ayahText: 'وَقُل رَّبِّ زِدْنِي عِلْمًا',
+                              ),
                               const SizedBox(height: 32),
 
                               TweenAnimationBuilder<double>(

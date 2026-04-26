@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
 
 export type ProgressDocument = Progress &
   Document & {
@@ -9,13 +9,13 @@ export type ProgressDocument = Progress &
 
 @Schema({ timestamps: true })
 export class Progress {
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Kid' })
+  @Prop({ required: true, type: Types.ObjectId, ref: "Kid" })
   kidId: Types.ObjectId;
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Lesson' })
+  @Prop({ required: true, type: Types.ObjectId, ref: "Lesson" })
   lessonId: Types.ObjectId;
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Subject' })
+  @Prop({ required: true, type: Types.ObjectId, ref: "Subject" })
   subjectId: Types.ObjectId;
 
   @Prop({ default: 0 })

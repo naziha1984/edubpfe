@@ -32,12 +32,18 @@ class QuizProvider with ChangeNotifier {
     }
   }
 
-  Future<void> loadLessons(String subjectId) async {
+  Future<void> loadLessons(
+    String subjectId, {
+    int? schoolLevel,
+  }) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      _lessons = await _apiService.getLessons(subjectId);
+      _lessons = await _apiService.getLessons(
+        subjectId,
+        schoolLevel: schoolLevel,
+      );
       _isLoading = false;
       notifyListeners();
     } catch (e) {

@@ -4,7 +4,7 @@ import {
   IsArray,
   IsNumber,
   ArrayMinSize,
-} from 'class-validator';
+} from "class-validator";
 
 export class AnswerDto {
   @IsNumber()

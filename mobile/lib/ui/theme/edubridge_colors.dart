@@ -3,6 +3,15 @@ import 'package:flutter/material.dart';
 /// Système de couleurs EduBridge - Material 3
 /// Palette moderne avec gradients doux et glassmorphism
 class EduBridgeColors {
+  // Brand palette (inspired by Stripe/Linear/Notion)
+  static const Color brand900 = Color(0xFF312E81);
+  static const Color brand800 = Color(0xFF3730A3);
+  static const Color brand700 = Color(0xFF4338CA);
+  static const Color brand600 = Color(0xFF4F46E5);
+  static const Color brand500 = Color(0xFF6366F1);
+  static const Color brand400 = Color(0xFF818CF8);
+  static const Color brand300 = Color(0xFFA5B4FC);
+
   // Primary Colors - Indigo
   static const Color primary = Color(0xFF6366F1);
   static const Color primaryDark = Color(0xFF4F46E5);
@@ -26,6 +35,7 @@ class EduBridgeColors {
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceVariant = Color(0xFFF1F5F9);
   static const Color surfaceDim = Color(0xFFE2E8F0);
+  static const Color border = Color(0xFFE2E8F0);
 
   // Text Colors
   static const Color textPrimary = Color(0xFF1E293B);
@@ -86,6 +96,7 @@ class EduBridgeColors {
   static const Color darkBackground = Color(0xFF0F1218);
   static const Color darkSurface = Color(0xFF171B24);
   static const Color darkSurfaceVariant = Color(0xFF222836);
+  static const Color darkBorder = Color(0xFF334155);
   static const Color darkTextPrimary = Color(0xFFE8EEF4);
   static const Color darkTextSecondary = Color(0xFF9BA4B5);
   static const Color darkTextTertiary = Color(0xFF6B7588);

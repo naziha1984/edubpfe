@@ -3,28 +3,28 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
-} from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+} from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model, Types } from "mongoose";
 import {
   QuizSession,
   QuizSessionDocument,
-} from './schemas/quiz-session.schema';
-import { Progress, ProgressDocument } from './schemas/progress.schema';
+} from "./schemas/quiz-session.schema";
+import { Progress, ProgressDocument } from "./schemas/progress.schema";
 import {
   QuizQuestion,
   QuizQuestionDocument,
   QuizDifficulty,
-} from './schemas/quiz-question.schema';
-import { NotificationsService } from '../notifications/notifications.service';
-import { NotificationType } from '../notifications/schemas/notification.schema';
-import { CreateSessionDto } from './dto/create-session.dto';
-import { SubmitQuizDto } from './dto/submit-quiz.dto';
-import { CreateQuizQuestionDto } from './dto/create-quiz-question.dto';
-import { LessonsService } from '../subjects/lessons.service';
-import { SubjectsService } from '../subjects/subjects.service';
-import { RewardsService } from '../rewards/rewards.service';
-import { UserRole } from '../users/schemas/user.schema';
+} from "./schemas/quiz-question.schema";
+import { NotificationsService } from "../notifications/notifications.service";
+import { NotificationType } from "../notifications/schemas/notification.schema";
+import { CreateSessionDto } from "./dto/create-session.dto";
+import { SubmitQuizDto } from "./dto/submit-quiz.dto";
+import { CreateQuizQuestionDto } from "./dto/create-quiz-question.dto";
+import { LessonsService } from "../subjects/lessons.service";
+import { SubjectsService } from "../subjects/subjects.service";
+import { RewardsService } from "../rewards/rewards.service";
+import { UserRole } from "../users/schemas/user.schema";
 
 @Injectable()
 export class QuizService {
@@ -45,26 +45,26 @@ export class QuizService {
     createSessionDto: CreateSessionDto,
     kidIdFromToken: string,
   ) {
-    // Strict IDOR check: kidId from token must match kidId from request
+    // Vérification IDOR stricte : le kidId du token doit correspondre à celui de la requête
     if (createSessionDto.kidId !== kidIdFromToken) {
-      throw new ForbiddenException('You can only create sessions for yourself');
+      throw new ForbiddenException("You can only create sessions for yourself");
     }
 
-    // Verify lesson exists
+    // Vérifier que la leçon existe
     const lesson = await this.lessonsService.findOne(createSessionDto.lessonId);
     if (!lesson) {
-      throw new NotFoundException('Lesson not found');
+      throw new NotFoundException("Lesson not found");
     }
 
-    // Get subject from lesson
+    // Récupérer la matière depuis la leçon
     const subject = await this.subjectsService.findOne(
       lesson.subjectId.toString(),
     );
     if (!subject) {
-      throw new NotFoundException('Subject not found');
+      throw new NotFoundException("Subject not found");
     }
 
-    // Create or update progress
+    // Créer ou mettre à jour la progression
     await this.progressModel.findOneAndUpdate(
       {
         kidId: new Types.ObjectId(kidIdFromToken),
@@ -78,11 +78,11 @@ export class QuizService {
       { upsert: true, new: true },
     );
 
-    // Create quiz session
+    // Créer la session de quiz
     const session = new this.quizSessionModel({
       kidId: new Types.ObjectId(kidIdFromToken),
       lessonId: new Types.ObjectId(createSessionDto.lessonId),
-      status: 'in_progress',
+      status: "in_progress",
       difficultyFilter: createSessionDto.difficulty,
     });
 
@@ -98,23 +98,23 @@ export class QuizService {
     percentage: number;
     xpEarned: number;
   }> {
-    // Get session
+    // Charger la session
     const session = await this.quizSessionModel.findById(
       submitQuizDto.sessionId,
     );
     if (!session) {
-      throw new NotFoundException('Quiz session not found');
+      throw new NotFoundException("Quiz session not found");
     }
 
-    // Strict IDOR check: session must belong to the kid from token
+    // Vérification IDOR stricte : la session doit appartenir à l'enfant du token
     if (session.kidId.toString() !== kidIdFromToken) {
       throw new ForbiddenException(
-        'You can only submit quizzes for your own sessions',
+        "You can only submit quizzes for your own sessions",
       );
     }
 
-    if (session.status === 'completed') {
-      throw new BadRequestException('Quiz session already completed');
+    if (session.status === "completed") {
+      throw new BadRequestException("Quiz session already completed");
     }
 
     const qFilter: Record<string, unknown> = {
@@ -132,11 +132,11 @@ export class QuizService {
 
     if (questions.length === 0) {
       throw new BadRequestException(
-        'This lesson has no quiz questions yet. Add questions in the database or use a lesson that includes a quiz.',
+        "This lesson has no quiz questions yet. Add questions in the database or use a lesson that includes a quiz.",
       );
     }
 
-    // Calculate score
+    // Calculer le score
     let correctAnswers = 0;
     const totalQuestions = questions.length;
 
@@ -150,45 +150,59 @@ export class QuizService {
     const score = correctAnswers;
     const percentage = Math.round((score / totalQuestions) * 100);
 
-    // Update session
+    // Mettre à jour la session
     session.score = score;
     session.totalQuestions = totalQuestions;
-    session.status = 'completed';
+    session.status = "completed";
     session.completedAt = new Date();
     await session.save();
 
-    // Update progress
+    // Mettre à jour la progression
     const progress = await this.progressModel.findOne({
       kidId: session.kidId,
       lessonId: session.lessonId,
     });
 
     if (progress) {
+      const wasCompleted = Boolean(progress.isCompleted);
       progress.attempts += 1;
       if (score > progress.bestScore) {
         progress.bestScore = score;
       }
-      if (percentage >= 80) {
+      const willCompleteLesson = percentage >= 80;
+      if (willCompleteLesson) {
         progress.isCompleted = true;
       }
       progress.lastAttemptAt = new Date();
       await progress.save();
+
+      if (!wasCompleted && willCompleteLesson) {
+        // Première validation de la leçon -> +5 points
+        await this.rewardsService.addXP(
+          kidIdFromToken,
+          5,
+          "lesson_complete",
+          session._id.toString(),
+          `Lesson completed for the first time.`,
+        );
+        await this.rewardsService.updateStreak(kidIdFromToken);
+      }
     }
 
-    // Award XP based on score
-    const baseXP = 50; // Base XP for completing a quiz
-    const scoreBonus = Math.round((score / totalQuestions) * 50); // Up to 50 bonus XP
+    // Attribuer l'XP selon le score
+    const baseXP = 50; // XP de base pour terminer un quiz
+    const scoreBonus = Math.round((score / totalQuestions) * 50); // Jusqu'à 50 XP bonus
     const totalXP = baseXP + scoreBonus;
 
     await this.rewardsService.addXP(
       kidIdFromToken,
       totalXP,
-      'quiz',
+      "quiz",
       session._id.toString(),
       `Quiz completed: ${score}/${totalQuestions} (${percentage}%)`,
     );
 
-    // Check for quiz-related badges
+    // Vérifier les badges liés aux quiz
     await this.rewardsService.checkQuizBadges(
       kidIdFromToken,
       score,
@@ -198,11 +212,11 @@ export class QuizService {
     await this.notificationsService.notifyParentOfKid(
       kidIdFromToken,
       NotificationType.CHILD_PROGRESS,
-      'Quiz completed',
+      "Quiz completed",
       `Your child completed a quiz: ${score}/${totalQuestions} (${percentage}%).`,
       {
         relatedId: session._id.toString(),
-        relatedType: 'quiz_session',
+        relatedType: "quiz_session",
       },
     );
 
@@ -210,11 +224,11 @@ export class QuizService {
       await this.notificationsService.notifyParentOfKid(
         kidIdFromToken,
         NotificationType.REWARD_EARNED,
-        'Points earned',
+        "Points earned",
         `+${totalXP} XP for this quiz!`,
         {
           relatedId: session._id.toString(),
-          relatedType: 'quiz_session',
+          relatedType: "quiz_session",
         },
       );
     }
@@ -227,16 +241,13 @@ export class QuizService {
     };
   }
 
-  async getQuestionsForQuizSession(
-    sessionId: string,
-    kidIdFromToken: string,
-  ) {
+  async getQuestionsForQuizSession(sessionId: string, kidIdFromToken: string) {
     const session = await this.quizSessionModel.findById(sessionId).exec();
     if (!session) {
-      throw new NotFoundException('Quiz session not found');
+      throw new NotFoundException("Quiz session not found");
     }
     if (session.kidId.toString() !== kidIdFromToken) {
-      throw new ForbiddenException('You can only load your own quiz session');
+      throw new ForbiddenException("You can only load your own quiz session");
     }
     return this.getQuestionsForLesson(
       session.lessonId.toString(),
@@ -244,14 +255,11 @@ export class QuizService {
     );
   }
 
-  /** Questions shown to the kid (no correct answer). Order matches scoring in submitQuiz. */
-  async getQuestionsForLesson(
-    lessonId: string,
-    difficulty?: QuizDifficulty,
-  ) {
+  /** Questions affichées à l'enfant (sans bonne réponse). L'ordre correspond au calcul du score dans submitQuiz. */
+  async getQuestionsForLesson(lessonId: string, difficulty?: QuizDifficulty) {
     const lesson = await this.lessonsService.findOne(lessonId);
     if (!lesson) {
-      throw new NotFoundException('Lesson not found');
+      throw new NotFoundException("Lesson not found");
     }
 
     const filter: Record<string, unknown> = {
@@ -265,7 +273,7 @@ export class QuizService {
     const questions = await this.quizQuestionModel
       .find(filter)
       .sort({ createdAt: 1 })
-      .select('question options difficulty')
+      .select("question options difficulty")
       .lean()
       .exec();
 
@@ -280,12 +288,12 @@ export class QuizService {
   async getSessionById(sessionId: string, kidIdFromToken: string) {
     const session = await this.quizSessionModel.findById(sessionId);
     if (!session) {
-      throw new NotFoundException('Quiz session not found');
+      throw new NotFoundException("Quiz session not found");
     }
 
-    // Strict IDOR check
+    // Vérification IDOR stricte
     if (session.kidId.toString() !== kidIdFromToken) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException("Access denied");
     }
 
     return session;
@@ -299,7 +307,7 @@ export class QuizService {
     if (role === UserRole.ADMIN) return;
     if (lesson.teacherId?.toString() === userId) return;
     throw new ForbiddenException(
-      'You can only manage quiz questions for your own lessons',
+      "You can only manage quiz questions for your own lessons",
     );
   }
 
@@ -327,12 +335,12 @@ export class QuizService {
   ) {
     const lesson = await this.lessonsService.findOne(lessonId);
     if (!lesson) {
-      throw new NotFoundException('Lesson not found');
+      throw new NotFoundException("Lesson not found");
     }
     this.assertLessonEditAccess(lesson, userId, role);
     if (dto.correctAnswer >= dto.options.length) {
       throw new BadRequestException(
-        'correctAnswer must be a valid index in options',
+        "correctAnswer must be a valid index in options",
       );
     }
     const doc = await this.quizQuestionModel.create({
@@ -355,7 +363,7 @@ export class QuizService {
   ) {
     const lesson = await this.lessonsService.findOne(lessonId);
     if (!lesson) {
-      throw new NotFoundException('Lesson not found');
+      throw new NotFoundException("Lesson not found");
     }
     this.assertLessonEditAccess(lesson, userId, role);
     const qs = await this.quizQuestionModel
@@ -365,14 +373,18 @@ export class QuizService {
     return qs.map((q) => this.mapQuestionAdmin(q));
   }
 
-  async deleteTeacherQuestion(questionId: string, userId: string, role: string) {
+  async deleteTeacherQuestion(
+    questionId: string,
+    userId: string,
+    role: string,
+  ) {
     const q = await this.quizQuestionModel.findById(questionId);
     if (!q) {
-      throw new NotFoundException('Question not found');
+      throw new NotFoundException("Question not found");
     }
     const lesson = await this.lessonsService.findOne(q.lessonId.toString());
     if (!lesson) {
-      throw new NotFoundException('Lesson not found');
+      throw new NotFoundException("Lesson not found");
     }
     this.assertLessonEditAccess(lesson, userId, role);
     await this.quizQuestionModel.findByIdAndDelete(questionId);

@@ -4,7 +4,7 @@ import {
   IsOptional,
   IsMongoId,
   IsDateString,
-} from 'class-validator';
+} from "class-validator";
 
 export class CreateAssignmentDto {
   @IsMongoId()

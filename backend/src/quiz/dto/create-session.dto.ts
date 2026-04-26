@@ -1,5 +1,5 @@
-import { IsMongoId, IsNotEmpty, IsEnum, IsOptional } from 'class-validator';
-import { QuizDifficulty } from '../schemas/quiz-question.schema';
+import { IsMongoId, IsNotEmpty, IsEnum, IsOptional } from "class-validator";
+import { QuizDifficulty } from "../schemas/quiz-question.schema";
 
 export class CreateSessionDto {
   @IsMongoId()

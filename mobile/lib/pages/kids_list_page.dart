@@ -12,6 +12,7 @@ import '../components/join_class_bottom_sheet.dart';
 import '../components/toast.dart';
 import '../providers/kids_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/messages_provider.dart';
 import '../utils/error_handler.dart';
 import '../utils/rtl_support.dart';
 import '../utils/app_router.dart';
@@ -19,6 +20,10 @@ import 'add_kid_page.dart';
 import 'set_pin_page.dart';
 import 'verify_pin_page.dart';
 import 'notifications_screen.dart';
+import 'parent_teachers_list_screen.dart';
+import 'inbox_screen.dart';
+import 'parent_child_progress_screen.dart';
+import '../components/unread_badge.dart';
 
 class KidsListPage extends StatefulWidget {
   const KidsListPage({super.key});
@@ -117,9 +122,10 @@ class _KidsListPageState extends State<KidsListPage> {
   @override
   void initState() {
     super.initState();
-    // Décaler le chargement après le premier frame pour éviter setState() during build
+    // Décaler le chargement après le premier frame pour éviter un setState() pendant le build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadKids();
+      Provider.of<MessagesProvider>(context, listen: false).loadConversations();
     });
   }
 
@@ -168,6 +174,7 @@ class _KidsListPageState extends State<KidsListPage> {
   Widget build(BuildContext context) {
     final kidsProvider = Provider.of<KidsProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
+    final messagesProvider = Provider.of<MessagesProvider>(context);
     
     // Protection : Seuls les PARENT peuvent accéder à cette page
     if (!authProvider.isParent) {
@@ -194,7 +201,7 @@ class _KidsListPageState extends State<KidsListPage> {
           child: SafeArea(
             child: Column(
               children: [
-                // App Bar
+                // Barre d'application
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Row(
@@ -222,7 +229,23 @@ class _KidsListPageState extends State<KidsListPage> {
                               );
                             },
                           ),
-                          // Language selector
+                          IconButton(
+                            tooltip: 'Messages',
+                            icon: UnreadBadge(
+                              count: messagesProvider.totalUnread,
+                              child: const Icon(Icons.mail_outline_rounded),
+                            ),
+                            color: EduBridgeColors.textPrimary,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const InboxScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          // Sélecteur de langue
                           DropdownButton<String>(
                             value: _selectedLanguage,
                             hint: const Text('Language'),
@@ -283,7 +306,7 @@ class _KidsListPageState extends State<KidsListPage> {
                     ],
                   ),
                 ),
-                // Kids List
+                // Liste des enfants
                 Expanded(
                   child: kidsProvider.isLoading
                       ? const Loading()
@@ -319,7 +342,7 @@ class _KidsListPageState extends State<KidsListPage> {
                                     margin: const EdgeInsets.only(bottom: 16),
                                     padding: const EdgeInsets.all(20),
                                     onTap: () {
-                                      // Navigate to PIN verification
+                                      // Aller vers la vérification du PIN
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -327,6 +350,11 @@ class _KidsListPageState extends State<KidsListPage> {
                                             kidId: kid['id'],
                                             kidName:
                                                 '${kid['firstName']} ${kid['lastName']}',
+                                            schoolLevel: (kid['schoolLevel'] is num)
+                                                ? (kid['schoolLevel'] as num).toInt()
+                                                : int.tryParse(
+                                                    kid['schoolLevel']?.toString() ?? '',
+                                                  ),
                                           ),
                                         ),
                                       );
@@ -365,6 +393,15 @@ class _KidsListPageState extends State<KidsListPage> {
                                                   'Grade: ${kid['grade']}',
                                                   style: EduBridgeTypography
                                                       .bodyMedium,
+                                                ),
+                                              if (kid['schoolLevel'] != null)
+                                                Text(
+                                                  'Level: Year ${kid['schoolLevel']}',
+                                                  style: EduBridgeTypography
+                                                      .bodyMedium
+                                                      .copyWith(
+                                                    color: EduBridgeColors.textSecondary,
+                                                  ),
                                                 ),
                                               const SizedBox(height: 6),
                                               Row(
@@ -419,6 +456,38 @@ class _KidsListPageState extends State<KidsListPage> {
                                             );
                                           },
                                         ),
+                                        IconButton(
+                                          tooltip: 'Choisir enseignant',
+                                          icon: const Icon(Icons.school_outlined),
+                                          onPressed: () async {
+                                            await Navigator.push(
+                                              context,
+                                              MaterialPageRoute<void>(
+                                                builder: (_) => ParentTeachersListScreen(
+                                                  kidId: kid['id'].toString(),
+                                                  kidName:
+                                                      '${kid['firstName']} ${kid['lastName']}',
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        IconButton(
+                                          tooltip: 'Notes et progrès',
+                                          icon: const Icon(Icons.insights_outlined),
+                                          onPressed: () async {
+                                            await Navigator.push(
+                                              context,
+                                              MaterialPageRoute<void>(
+                                                builder: (_) => ParentChildProgressScreen(
+                                                  kidId: kid['id'].toString(),
+                                                  kidName:
+                                                      '${kid['firstName']} ${kid['lastName']}',
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
                                       ],
                                     ),
                                   );
@@ -426,7 +495,7 @@ class _KidsListPageState extends State<KidsListPage> {
                               ),
                             ),
                 ),
-                // Add kid + join class
+                // Ajouter un enfant + rejoindre une classe
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: Column(

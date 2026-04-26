@@ -12,11 +12,13 @@ import 'subjects_page.dart';
 class VerifyPinPage extends StatefulWidget {
   final String kidId;
   final String kidName;
+  final int? schoolLevel;
 
   const VerifyPinPage({
     super.key,
     required this.kidId,
     required this.kidName,
+    this.schoolLevel,
   });
 
   @override
@@ -62,6 +64,7 @@ class _VerifyPinPageState extends State<VerifyPinPage> {
               builder: (context) => SubjectsPage(
                 kidId: widget.kidId,
                 kidName: widget.kidName,
+                schoolLevel: widget.schoolLevel,
               ),
             ),
           );

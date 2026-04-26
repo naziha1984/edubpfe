@@ -1,4 +1,4 @@
-import { LessonDocument } from './schemas/lesson.schema';
+import { LessonDocument } from "./schemas/lesson.schema";
 
 export function mapLessonAttachment(att: {
   originalName: string;

@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
 
 /** Pièce jointe (fichiers hébergés sous /api/uploads/assignments/) */
 @Schema({ _id: false })
@@ -32,10 +32,10 @@ export type AssignmentDocument = Assignment &
 
 @Schema({ timestamps: true })
 export class Assignment {
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Class' })
+  @Prop({ required: true, type: Types.ObjectId, ref: "Class" })
   classId: Types.ObjectId;
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
+  @Prop({ required: true, type: Types.ObjectId, ref: "User" })
   teacherId: Types.ObjectId;
 
   @Prop({ required: true })
@@ -44,7 +44,7 @@ export class Assignment {
   @Prop()
   description?: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Lesson' })
+  @Prop({ type: Types.ObjectId, ref: "Lesson" })
   lessonId?: Types.ObjectId;
 
   @Prop({ required: true, type: Date })

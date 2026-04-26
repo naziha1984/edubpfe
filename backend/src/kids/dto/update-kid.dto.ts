@@ -1,4 +1,12 @@
-import { IsString, IsOptional, IsDateString, IsBoolean } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsDateString,
+  IsBoolean,
+  IsInt,
+  Min,
+  Max,
+} from "class-validator";
 
 export class UpdateKidDto {
   @IsString()
@@ -20,6 +28,12 @@ export class UpdateKidDto {
   @IsString()
   @IsOptional()
   school?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(6)
+  schoolLevel?: number;
 
   @IsBoolean()
   @IsOptional()

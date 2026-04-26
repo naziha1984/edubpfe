@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'edubridge_colors.dart';
+import 'edubridge_design_system.dart';
 import 'edubridge_typography.dart';
 
 /// Design System EduBridge - Material 3
@@ -67,124 +68,19 @@ class EduBridgeTheme {
       ),
 
       // Card Theme — surface élevée, ombre portée douce
-      cardTheme: CardThemeData(
-        elevation: elevation2,
-        shadowColor: Colors.black.withOpacity(0.08),
-        surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusLG),
-        ),
-        color: EduBridgeColors.surface,
-        margin: EdgeInsets.zero,
-      ),
+      cardTheme: EDSComponentThemes.card(false),
 
       // Input Decoration Theme
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: EduBridgeColors.surface,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: spacingMD,
-          vertical: spacingMD,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMD),
-          borderSide: BorderSide(
-            color: EduBridgeColors.textTertiary.withOpacity(0.3),
-            width: 1.5,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMD),
-          borderSide: BorderSide(
-            color: EduBridgeColors.textTertiary.withOpacity(0.3),
-            width: 1.5,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMD),
-          borderSide: BorderSide(
-            color: EduBridgeColors.primary,
-            width: 2.0,
-          ),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMD),
-          borderSide: BorderSide(
-            color: EduBridgeColors.error,
-            width: 1.5,
-          ),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMD),
-          borderSide: BorderSide(
-            color: EduBridgeColors.error,
-            width: 2.0,
-          ),
-        ),
-        labelStyle: EduBridgeTypography.bodyMedium.copyWith(
-          color: EduBridgeColors.textSecondary,
-        ),
-        hintStyle: EduBridgeTypography.bodyMedium.copyWith(
-          color: EduBridgeColors.textTertiary,
-        ),
-      ),
+      inputDecorationTheme: EDSComponentThemes.input(false),
 
       // Elevated Button Theme
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          elevation: elevation0,
-          padding: const EdgeInsets.symmetric(
-            horizontal: spacingLG,
-            vertical: spacingMD,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusMD),
-          ),
-          backgroundColor: EduBridgeColors.primary,
-          foregroundColor: EduBridgeColors.textOnPrimary,
-          textStyle: EduBridgeTypography.labelLarge.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
+      elevatedButtonTheme: EDSComponentThemes.elevatedButton(false),
 
       // Text Button Theme
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(
-            horizontal: spacingMD,
-            vertical: spacingSM,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusMD),
-          ),
-          foregroundColor: EduBridgeColors.primary,
-          textStyle: EduBridgeTypography.labelLarge.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
+      textButtonTheme: EDSComponentThemes.textButton(false),
 
       // Outlined Button Theme
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(
-            horizontal: spacingLG,
-            vertical: spacingMD,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusMD),
-          ),
-          side: BorderSide(
-            color: EduBridgeColors.primary,
-            width: 1.5,
-          ),
-          foregroundColor: EduBridgeColors.primary,
-          textStyle: EduBridgeTypography.labelLarge.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
+      outlinedButtonTheme: EDSComponentThemes.outlinedButton(false),
 
       // Floating Action Button Theme
       floatingActionButtonTheme: FloatingActionButtonThemeData(
@@ -259,19 +155,13 @@ class EduBridgeTheme {
       ),
 
       // Chip Theme
-      chipTheme: ChipThemeData(
-        backgroundColor: EduBridgeColors.surfaceVariant,
-        labelStyle: EduBridgeTypography.labelMedium.copyWith(
-          color: EduBridgeColors.textPrimary,
-        ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: spacingSM,
-          vertical: spacingXS,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusFull),
-        ),
-      ),
+      chipTheme: EDSComponentThemes.chip(false),
+
+      // Design-system extensions: badges/chips tokens
+      extensions: <ThemeExtension<dynamic>>[
+        EDSComponentThemes.badgeTokens(false),
+        EDSComponentThemes.chipTokens(false),
+      ],
 
       // Snackbar Theme
       snackBarTheme: SnackBarThemeData(
@@ -343,116 +233,11 @@ class EduBridgeTheme {
           fontWeight: FontWeight.bold,
         ),
       ),
-      cardTheme: CardThemeData(
-        elevation: elevation2,
-        shadowColor: Colors.black.withOpacity(0.45),
-        surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusLG),
-        ),
-        color: EduBridgeColors.darkSurface,
-        margin: EdgeInsets.zero,
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: EduBridgeColors.darkSurfaceVariant,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: spacingMD,
-          vertical: spacingMD,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMD),
-          borderSide: BorderSide(
-            color: EduBridgeColors.darkTextTertiary.withOpacity(0.35),
-            width: 1.5,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMD),
-          borderSide: BorderSide(
-            color: EduBridgeColors.darkTextTertiary.withOpacity(0.35),
-            width: 1.5,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMD),
-          borderSide: const BorderSide(
-            color: EduBridgeColors.primaryLight,
-            width: 2.0,
-          ),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMD),
-          borderSide: const BorderSide(
-            color: EduBridgeColors.errorLight,
-            width: 1.5,
-          ),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMD),
-          borderSide: const BorderSide(
-            color: EduBridgeColors.errorLight,
-            width: 2.0,
-          ),
-        ),
-        labelStyle: EduBridgeTypography.bodyMedium.copyWith(
-          color: EduBridgeColors.darkTextSecondary,
-        ),
-        hintStyle: EduBridgeTypography.bodyMedium.copyWith(
-          color: EduBridgeColors.darkTextTertiary,
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          elevation: elevation0,
-          padding: const EdgeInsets.symmetric(
-            horizontal: spacingLG,
-            vertical: spacingMD,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusMD),
-          ),
-          backgroundColor: EduBridgeColors.primaryLight,
-          foregroundColor: Colors.white,
-          textStyle: EduBridgeTypography.labelLarge.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(
-            horizontal: spacingMD,
-            vertical: spacingSM,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusMD),
-          ),
-          foregroundColor: EduBridgeColors.primaryLight,
-          textStyle: EduBridgeTypography.labelLarge.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(
-            horizontal: spacingLG,
-            vertical: spacingMD,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusMD),
-          ),
-          side: const BorderSide(
-            color: EduBridgeColors.primaryLight,
-            width: 1.5,
-          ),
-          foregroundColor: EduBridgeColors.primaryLight,
-          textStyle: EduBridgeTypography.labelLarge.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
+      cardTheme: EDSComponentThemes.card(true),
+      inputDecorationTheme: EDSComponentThemes.input(true),
+      elevatedButtonTheme: EDSComponentThemes.elevatedButton(true),
+      textButtonTheme: EDSComponentThemes.textButton(true),
+      outlinedButtonTheme: EDSComponentThemes.outlinedButton(true),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         elevation: elevation3,
         shape: RoundedRectangleBorder(
@@ -517,19 +302,11 @@ class EduBridgeTheme {
         thickness: 1,
         space: 1,
       ),
-      chipTheme: ChipThemeData(
-        backgroundColor: EduBridgeColors.darkSurfaceVariant,
-        labelStyle: EduBridgeTypography.labelMedium.copyWith(
-          color: EduBridgeColors.darkTextPrimary,
-        ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: spacingSM,
-          vertical: spacingXS,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusFull),
-        ),
-      ),
+      chipTheme: EDSComponentThemes.chip(true),
+      extensions: <ThemeExtension<dynamic>>[
+        EDSComponentThemes.badgeTokens(true),
+        EDSComponentThemes.chipTokens(true),
+      ],
       snackBarTheme: SnackBarThemeData(
         backgroundColor: EduBridgeColors.darkSurfaceVariant,
         contentTextStyle: EduBridgeTypography.bodyMedium.copyWith(

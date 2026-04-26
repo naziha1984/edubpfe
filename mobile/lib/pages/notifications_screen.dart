@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/api_service.dart';
+import '../providers/notifications_provider.dart';
 import '../ui/theme/edubridge_colors.dart';
 import '../ui/theme/edubridge_typography.dart';
 import '../ui/theme/edubridge_theme.dart';
@@ -17,50 +17,29 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  List<Map<String, dynamic>> _items = [];
-  bool _loading = true;
-  String? _error;
-
   @override
   void initState() {
     super.initState();
-    _load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _load();
+    });
   }
 
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    final api = Provider.of<ApiService>(context, listen: false);
-    final data = await ErrorHandler.handleApiCall<List<dynamic>>(
+    final provider = Provider.of<NotificationsProvider>(context, listen: false);
+    await ErrorHandler.handleApiCall<void>(
       context,
-      () async => api.getNotifications(),
+      () => provider.load(),
     );
-    if (!mounted) return;
-    if (data == null) {
-      setState(() {
-        _loading = false;
-        _error = 'Load failed';
-      });
-      return;
-    }
-    setState(() {
-      _items = data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-      _loading = false;
-    });
   }
 
   Future<void> _markRead(String id) async {
-    final api = Provider.of<ApiService>(context, listen: false);
-    await ErrorHandler.handleApiCall(
+    final provider = Provider.of<NotificationsProvider>(context, listen: false);
+    await ErrorHandler.handleApiCall<void>(
       context,
-      () async {
-        await api.markNotificationRead(id);
-        return true;
-      },
+      () => provider.markRead(id),
     );
-    if (mounted) await _load();
   }
 
   @override
@@ -81,14 +60,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         foregroundColor: EduBridgeColors.textPrimary,
         shadowColor: Colors.black.withOpacity(0.06),
       ),
-      body: GradientPageShell(
-        showAmbientOrbs: false,
-        child: _loading
+      body: Consumer<NotificationsProvider>(
+        builder: (context, notifications, _) => GradientPageShell(
+          showAmbientOrbs: false,
+          child: notifications.isLoading
             ? const Center(child: CircularProgressIndicator())
-            : _error != null
+            : notifications.error != null
                 ? Center(
                     child: Text(
-                      _error!,
+                      notifications.error!,
                       style: EduBridgeTypography.bodyLarge.copyWith(
                         color: EduBridgeColors.error,
                       ),
@@ -97,7 +77,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 : RefreshIndicator(
                     onRefresh: _load,
                     color: EduBridgeColors.primary,
-                    child: _items.isEmpty
+                    child: notifications.items.isEmpty
                         ? ListView(
                             padding: const EdgeInsets.all(EduBridgeTheme.spacingLG),
                             children: [
@@ -121,9 +101,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               EduBridgeTheme.spacingLG,
                               EduBridgeTheme.spacingXL,
                             ),
-                            itemCount: _items.length,
+                            itemCount: notifications.items.length,
                             itemBuilder: (context, i) {
-                              final n = _items[i];
+                              final n = notifications.items[i];
                               final id = n['id']?.toString() ?? '';
                               final unread =
                                   n['status']?.toString() == 'UNREAD';
@@ -200,6 +180,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             },
                           ),
                   ),
+        ),
       ),
     );
   }

@@ -1,59 +1,134 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
+import '../ui/theme/edubridge_colors.dart';
 import '../main.dart';
 
-class ChatbotFloatingButton extends StatelessWidget {
+class ChatbotFloatingButton extends StatefulWidget {
   const ChatbotFloatingButton({super.key});
 
   @override
+  State<ChatbotFloatingButton> createState() => _ChatbotFloatingButtonState();
+}
+
+class _ChatbotFloatingButtonState extends State<ChatbotFloatingButton> {
+  bool _hovered = false;
+  bool _pressed = false;
+  bool _bounce = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      setState(() => _bounce = true);
+      await Future<void>.delayed(const Duration(milliseconds: 260));
+      if (mounted) setState(() => _bounce = false);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(22),
-        onTap: () {
-          final navContext = appNavigatorKey.currentContext;
-          if (navContext == null) {
-            return;
-          }
-          showModalBottomSheet<void>(
-            context: navContext,
-            useRootNavigator: true,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder: (_) => const _ChatbotPanel(),
-          );
-        },
-        child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    final elevated = _hovered || _pressed;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.96 : _bounce ? 1.06 : elevated ? 1.03 : 1,
+        duration: const Duration(milliseconds: 140),
+        curve: Curves.easeOutCubic,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
+            shape: BoxShape.circle,
             gradient: const LinearGradient(
-              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [EduBridgeColors.primary, EduBridgeColors.secondary],
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.18),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            boxShadow: elevated
+                ? [
+                    BoxShadow(
+                      color: EduBridgeColors.primary.withOpacity(0.32),
+                      blurRadius: 28,
+                      spreadRadius: -4,
+                      offset: const Offset(0, 14),
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.16),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: EduBridgeColors.primary.withOpacity(0.24),
+                      blurRadius: 22,
+                      spreadRadius: -4,
+                      offset: const Offset(0, 10),
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.12),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
           ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.smart_toy_rounded, color: Colors.white),
-              SizedBox(width: 8),
-              Text(
-                'Chatbot',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTapDown: (_) => setState(() => _pressed = true),
+              onTapUp: (_) => setState(() => _pressed = false),
+              onTapCancel: () => setState(() => _pressed = false),
+              onTap: () {
+                final navContext = appNavigatorKey.currentContext;
+                if (navContext == null) {
+                  return;
+                }
+                showModalBottomSheet<void>(
+                  context: navContext,
+                  useRootNavigator: true,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => const _ChatbotPanel(),
+                );
+              },
+              child: Container(
+                width: 64,
+                height: 64,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.35),
+                    width: 1,
+                  ),
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.14),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.smart_toy_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),

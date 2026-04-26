@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
 
 export type KidDocument = Kid &
   Document & {
@@ -9,7 +9,7 @@ export type KidDocument = Kid &
 
 @Schema({ timestamps: true })
 export class Kid {
-  @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
+  @Prop({ required: true, type: Types.ObjectId, ref: "User" })
   parentId: Types.ObjectId;
 
   @Prop({ required: true })
@@ -23,6 +23,9 @@ export class Kid {
 
   @Prop()
   grade?: string;
+
+  @Prop({ required: true, min: 1, max: 6, default: 1 })
+  schoolLevel: number;
 
   @Prop()
   school?: string;

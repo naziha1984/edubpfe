@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 class ApiService {
-  /// 默认 `http://localhost:3000/api`。若后端端口不同，运行：
+  /// Par défaut : `http://localhost:3000/api`. Si le backend écoute sur
+  /// un autre port, lancez :
   /// `flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:3001/api`
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
@@ -10,7 +12,7 @@ class ApiService {
   String? _token;
   String? _kidToken;
 
-  // Token management
+  // Gestion des jetons
   void setToken(String? token) {
     _token = token;
   }
@@ -22,7 +24,7 @@ class ApiService {
   String? get token => _token;
   String? get kidToken => _kidToken;
 
-  // Helper method to get headers
+  // Méthode utilitaire pour construire les en-têtes
   Map<String, String> _getHeaders({bool useKidToken = false}) {
     final headers = <String, String>{
       'Content-Type': 'application/json',
@@ -37,7 +39,7 @@ class ApiService {
     return headers;
   }
 
-  // Handle API response
+  // Gère la réponse de l'API
   Future<dynamic> _handleResponse(http.Response response) async {
     if (response.statusCode == 401) {
       throw ApiException('Unauthorized', 401);
@@ -67,7 +69,13 @@ class ApiService {
     return json.decode(response.body);
   }
 
-  // Auth endpoints
+  Future<dynamic> _handleStreamedResponse(http.StreamedResponse response) async {
+    final body = await response.stream.bytesToString();
+    final wrapped = http.Response(body, response.statusCode, headers: response.headers);
+    return _handleResponse(wrapped);
+  }
+
+  // Endpoints d'authentification
   /// [role] : 'PARENT' ou 'TEACHER' (défaut PARENT)
   Future<Map<String, dynamic>> register({
     required String email,
@@ -75,25 +83,58 @@ class ApiService {
     required String firstName,
     required String lastName,
     String role = 'PARENT',
+    Uint8List? cvBytes,
+    String? cvFileName,
   }) async {
     final normalizedEmail = email.trim().toLowerCase();
-    final response = await http.post(
+    final request = http.MultipartRequest(
+      'POST',
       Uri.parse('$baseUrl/auth/register'),
-      headers: _getHeaders(),
-      body: json.encode({
-        'email': normalizedEmail,
-        'password': password,
-        'firstName': firstName,
-        'lastName': lastName,
-        'role': role.toUpperCase(),
-      }),
     );
+    request.fields['email'] = normalizedEmail;
+    request.fields['password'] = password;
+    request.fields['firstName'] = firstName;
+    request.fields['lastName'] = lastName;
+    request.fields['role'] = role.toUpperCase();
 
-    final data = await _handleResponse(response);
+    if (cvBytes != null && cvFileName != null && cvFileName.trim().isNotEmpty) {
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'cv',
+          cvBytes,
+          filename: cvFileName,
+        ),
+      );
+    }
+
+    final streamed = await request.send();
+    final data = await _handleStreamedResponse(streamed);
     if (data['access_token'] != null) {
       _token = data['access_token'];
     }
     return data;
+  }
+
+  Future<Map<String, dynamic>> updateTeacherCv({
+    required Uint8List cvBytes,
+    required String cvFileName,
+  }) async {
+    final request = http.MultipartRequest(
+      'PATCH',
+      Uri.parse('$baseUrl/auth/teacher/cv'),
+    );
+    if (_token != null) {
+      request.headers['Authorization'] = 'Bearer $_token';
+    }
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'cv',
+        cvBytes,
+        filename: cvFileName,
+      ),
+    );
+    final streamed = await request.send();
+    return await _handleStreamedResponse(streamed) as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> login({
@@ -126,7 +167,7 @@ class ApiService {
     return await _handleResponse(response);
   }
 
-  // Kids endpoints
+  // Endpoints des enfants
   Future<List<dynamic>> getKids() async {
     final response = await http.get(
       Uri.parse('$baseUrl/kids'),
@@ -155,7 +196,7 @@ class ApiService {
     }
 
     final data = json.decode(response.body);
-    // API returns array directly
+    // L'API renvoie directement un tableau
     if (data is List) {
       return data;
     }
@@ -165,6 +206,7 @@ class ApiService {
   Future<Map<String, dynamic>> addKid({
     required String firstName,
     required String lastName,
+    required int schoolLevel,
     String? dateOfBirth,
     String? grade,
     String? school,
@@ -175,6 +217,7 @@ class ApiService {
       body: json.encode({
         'firstName': firstName,
         'lastName': lastName,
+        'schoolLevel': schoolLevel,
         if (dateOfBirth != null) 'dateOfBirth': dateOfBirth,
         if (grade != null) 'grade': grade,
         if (school != null) 'school': school,
@@ -232,7 +275,36 @@ class ApiService {
     return data;
   }
 
-  // Subjects and Lessons endpoints
+  Future<List<dynamic>> getAcceptedTeachers() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/kids/teachers/accepted'),
+      headers: _getHeaders(),
+    );
+    final data = await _handleResponse(response);
+    if (data is List) return data;
+    return [];
+  }
+
+  Future<Map<String, dynamic>> getTeacherPublicDetails(String teacherId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/kids/teachers/$teacherId/public'),
+      headers: _getHeaders(),
+    );
+    return await _handleResponse(response) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> selectTeacherForKid({
+    required String kidId,
+    required String teacherId,
+  }) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/kids/$kidId/teacher/$teacherId'),
+      headers: _getHeaders(),
+    );
+    return await _handleResponse(response) as Map<String, dynamic>;
+  }
+
+  // Endpoints des matières et leçons
   Future<List<dynamic>> getSubjects() async {
     final response = await http.get(
       Uri.parse('$baseUrl/subjects'),
@@ -255,16 +327,20 @@ class ApiService {
     }
 
     final data = json.decode(response.body);
-    // API returns array directly
+    // L'API renvoie directement un tableau
     if (data is List) {
       return data;
     }
     return [];
   }
 
-  Future<List<dynamic>> getLessons(String subjectId) async {
+  Future<List<dynamic>> getLessons(
+    String subjectId, {
+    int? schoolLevel,
+  }) async {
+    final query = (schoolLevel != null) ? '?schoolLevel=$schoolLevel' : '';
     final response = await http.get(
-      Uri.parse('$baseUrl/subjects/$subjectId/lessons'),
+      Uri.parse('$baseUrl/subjects/$subjectId/lessons$query'),
       headers: _getHeaders(),
     );
 
@@ -284,14 +360,172 @@ class ApiService {
     }
 
     final data = json.decode(response.body);
-    // API returns array directly
+    // L'API renvoie directement un tableau
     if (data is List) {
       return data;
     }
     return [];
   }
 
-  // Quiz endpoints
+  Future<Map<String, dynamic>> upsertLessonReview({
+    required String lessonId,
+    required int stars,
+    String? comment,
+    String? kidId,
+  }) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/lessons/$lessonId/review'),
+      headers: _getHeaders(),
+      body: json.encode({
+        'stars': stars,
+        if (comment != null) 'comment': comment,
+        if (kidId != null && kidId.isNotEmpty) 'kidId': kidId,
+      }),
+    );
+    return await _handleResponse(response) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> getLessonReviews(
+    String lessonId, {
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/lessons/$lessonId/reviews?page=$page&limit=$limit'),
+      headers: _getHeaders(),
+    );
+    return await _handleResponse(response) as Map<String, dynamic>;
+  }
+
+  Future<List<dynamic>> getTeacherLessonRatingsSummary() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/lessons/teacher/ratings-summary'),
+      headers: _getHeaders(),
+    );
+    final data = await _handleResponse(response);
+    if (data is List) return data;
+    return [];
+  }
+
+  Future<List<dynamic>> getConversations() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/messages/conversations'),
+      headers: _getHeaders(),
+    );
+    final data = await _handleResponse(response);
+    if (data is List) return data;
+    return [];
+  }
+
+  Future<List<dynamic>> getConversationMessages(String conversationId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/messages/conversations/$conversationId/messages'),
+      headers: _getHeaders(),
+    );
+    final data = await _handleResponse(response);
+    if (data is List) return data;
+    return [];
+  }
+
+  Future<Map<String, dynamic>> sendDirectMessage({
+    required String receiverId,
+    required String message,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/messages/direct/$receiverId'),
+      headers: _getHeaders(),
+      body: json.encode({'message': message}),
+    );
+    return await _handleResponse(response) as Map<String, dynamic>;
+  }
+
+  Future<void> markConversationRead(String conversationId) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/messages/conversations/$conversationId/read'),
+      headers: _getHeaders(),
+    );
+    await _handleResponse(response);
+  }
+
+  Future<Map<String, dynamic>> addStudentNote({
+    required String kidId,
+    String? behavior,
+    String? participation,
+    String? homeworkQuality,
+    String? comprehension,
+    String? recommendations,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/student-tracking/students/$kidId/notes'),
+      headers: _getHeaders(),
+      body: json.encode({
+        if (behavior != null && behavior.trim().isNotEmpty) 'behavior': behavior,
+        if (participation != null && participation.trim().isNotEmpty)
+          'participation': participation,
+        if (homeworkQuality != null && homeworkQuality.trim().isNotEmpty)
+          'homeworkQuality': homeworkQuality,
+        if (comprehension != null && comprehension.trim().isNotEmpty)
+          'comprehension': comprehension,
+        if (recommendations != null && recommendations.trim().isNotEmpty)
+          'recommendations': recommendations,
+      }),
+    );
+    return await _handleResponse(response) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> addStudentProgressEntry({
+    required String kidId,
+    required int progressPercent,
+    int? comprehensionScore,
+    int? homeworkScore,
+    int? participationScore,
+    String? title,
+    String? note,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/student-tracking/students/$kidId/progress'),
+      headers: _getHeaders(),
+      body: json.encode({
+        'progressPercent': progressPercent,
+        if (comprehensionScore != null) 'comprehensionScore': comprehensionScore,
+        if (homeworkScore != null) 'homeworkScore': homeworkScore,
+        if (participationScore != null) 'participationScore': participationScore,
+        if (title != null && title.trim().isNotEmpty) 'title': title,
+        if (note != null && note.trim().isNotEmpty) 'note': note,
+      }),
+    );
+    return await _handleResponse(response) as Map<String, dynamic>;
+  }
+
+  Future<List<dynamic>> getStudentNotes(String kidId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/student-tracking/students/$kidId/notes'),
+      headers: _getHeaders(),
+    );
+    final data = await _handleResponse(response);
+    if (data is List) return data;
+    return [];
+  }
+
+  Future<List<dynamic>> getStudentProgressHistory(String kidId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/student-tracking/students/$kidId/progress'),
+      headers: _getHeaders(),
+    );
+    final data = await _handleResponse(response);
+    if (data is List) return data;
+    return [];
+  }
+
+  Future<Map<String, dynamic>> getStudentTrackingOverview(String kidId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/student-tracking/students/$kidId/overview'),
+      headers: _getHeaders(),
+    );
+    return await _handleResponse(response) as Map<String, dynamic>;
+  }
+
+  // Endpoints des quiz
   Future<Map<String, dynamic>> createQuizSession({
     required String kidId,
     required String lessonId,
@@ -372,10 +606,48 @@ class ApiService {
     return [];
   }
 
+  Future<int> getUnreadNotificationsCount() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/notifications/unread-count'),
+      headers: _getHeaders(),
+    );
+    final data = await _handleResponse(response);
+    return (data['unreadCount'] as num?)?.toInt() ?? 0;
+  }
+
   Future<void> markNotificationRead(String id) async {
     final response = await http.patch(
       Uri.parse('$baseUrl/notifications/$id/read'),
       headers: _getHeaders(),
+    );
+    await _handleResponse(response);
+  }
+
+  Future<List<dynamic>> getKidNotifications() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/notifications/kid'),
+      headers: _getHeaders(useKidToken: true),
+    );
+    final data = await _handleResponse(response);
+    if (data is List) {
+      return data;
+    }
+    return [];
+  }
+
+  Future<int> getKidUnreadNotificationsCount() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/notifications/kid/unread-count'),
+      headers: _getHeaders(useKidToken: true),
+    );
+    final data = await _handleResponse(response);
+    return (data['unreadCount'] as num?)?.toInt() ?? 0;
+  }
+
+  Future<void> markKidNotificationRead(String id) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/notifications/kid/$id/read'),
+      headers: _getHeaders(useKidToken: true),
     );
     await _handleResponse(response);
   }
@@ -388,7 +660,7 @@ class ApiService {
     return await _handleResponse(response) as Map<String, dynamic>;
   }
 
-  // Chatbot endpoints (kid session required)
+  // Endpoints du chatbot (session enfant requise)
   Future<Map<String, dynamic>> sendChatbotMessage({
     required String message,
   }) async {

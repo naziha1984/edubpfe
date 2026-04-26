@@ -2,16 +2,16 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
-} from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { Reward, RewardDocument } from './schemas/reward.schema';
-import { Badge, BadgeDocument, BadgeType } from './schemas/badge.schema';
+} from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model, Types } from "mongoose";
+import { Reward, RewardDocument } from "./schemas/reward.schema";
+import { Badge, BadgeDocument, BadgeType } from "./schemas/badge.schema";
 import {
   RewardHistory,
   RewardHistoryDocument,
-} from './schemas/reward-history.schema';
-import { KidsService } from '../kids/kids.service';
+} from "./schemas/reward-history.schema";
+import { KidsService } from "../kids/kids.service";
 
 @Injectable()
 export class RewardsService {
@@ -53,25 +53,63 @@ export class RewardsService {
   ): Promise<RewardDocument> {
     const reward = await this.getOrCreateReward(kidId);
 
-    // Utilisé uniquement pour le recalcul du niveau (inutile ici).
-    // On garde la logique sans variable inutile pour passer le lint.
+    const kidObjectId = new Types.ObjectId(kidId);
+
+    // Idempotency: if caller provides sourceId, we must ensure XP is added exactly once
+    // for the same (kidId, source, sourceId). We enforce this by inserting the history
+    // record first (unique index on RewardHistory).
+    let insertedHistoryId: Types.ObjectId | null = null;
+    if (sourceId) {
+      try {
+        const history = await this.rewardHistoryModel.create({
+          kidId: kidObjectId,
+          xpEarned: xpAmount,
+          source,
+          sourceId,
+          description,
+        });
+        insertedHistoryId = history._id as Types.ObjectId;
+      } catch (e: any) {
+        // Duplicate action: history already exists -> don't add XP again.
+        if (e?.code === 11000) {
+          // Reload reward for freshness (some other request already updated it).
+          return await this.getOrCreateReward(kidId);
+        }
+        throw e;
+      }
+    }
+
+    // Apply XP only if we either (a) inserted the unique history successfully, or
+    // (b) no sourceId was provided (non-idempotent mode).
     reward.totalXP += xpAmount;
     reward.currentLevel = Math.floor(reward.totalXP / this.XP_PER_LEVEL);
 
     // Check for level up badges
     await this.checkLevelUpBadges(reward);
 
-    await reward.save();
+    try {
+      await reward.save();
+    } catch (e) {
+      // Compensation: if reward update fails after inserting history, delete history
+      // so future calls can re-apply.
+      if (insertedHistoryId) {
+        await this.rewardHistoryModel
+          .findByIdAndDelete(insertedHistoryId)
+          .exec();
+      }
+      throw e;
+    }
 
-    // Record in history
-    const history = new this.rewardHistoryModel({
-      kidId: new Types.ObjectId(kidId),
-      xpEarned: xpAmount,
-      source,
-      sourceId,
-      description,
-    });
-    await history.save();
+    // Record in history when sourceId is not provided (no unique idempotency).
+    if (!sourceId) {
+      const history = new this.rewardHistoryModel({
+        kidId: kidObjectId,
+        xpEarned: xpAmount,
+        source,
+        description,
+      });
+      await history.save();
+    }
 
     return reward;
   }
@@ -127,7 +165,7 @@ export class RewardsService {
       await this.addXP(
         kidId,
         xpEarned,
-        'streak',
+        "streak",
         undefined,
         `Daily streak: ${reward.currentStreak} days`,
       );
@@ -207,7 +245,7 @@ export class RewardsService {
     const completedQuizzes = await this.rewardHistoryModel
       .countDocuments({
         kidId: new Types.ObjectId(kidId),
-        source: 'quiz',
+        source: "quiz",
       })
       .exec();
 
@@ -233,20 +271,20 @@ export class RewardsService {
     // Strict IDOR check
     if (requesterKidId) {
       if (kidId !== requesterKidId) {
-        throw new ForbiddenException('You can only view your own rewards');
+        throw new ForbiddenException("You can only view your own rewards");
       }
     } else if (requesterParentId) {
       const kid = await this.kidsService.findOneById(kidId);
       if (!kid) {
-        throw new NotFoundException('Kid not found');
+        throw new NotFoundException("Kid not found");
       }
       if (kid.parentId.toString() !== requesterParentId) {
         throw new ForbiddenException(
-          'You can only view rewards for your own kids',
+          "You can only view rewards for your own kids",
         );
       }
     } else {
-      throw new ForbiddenException('Authentication required');
+      throw new ForbiddenException("Authentication required");
     }
 
     const reward = await this.getOrCreateReward(kidId);

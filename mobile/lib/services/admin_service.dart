@@ -112,4 +112,146 @@ class AdminService {
 
     return await _handleResponse(response) as Map<String, dynamic>;
   }
+
+  Future<Map<String, dynamic>> getDashboardOverview() async {
+    final response = await http.get(
+      Uri.parse('${ApiService.baseUrl}/admin/dashboard/overview'),
+      headers: _getHeaders(),
+    );
+    return await _handleResponse(response) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> getNotificationsOverview() async {
+    final response = await http.get(
+      Uri.parse('${ApiService.baseUrl}/admin/notifications/overview'),
+      headers: _getHeaders(),
+    );
+    return await _handleResponse(response) as Map<String, dynamic>;
+  }
+
+  Future<List<Map<String, dynamic>>> getTeachers({
+    String? status,
+    String? search,
+  }) async {
+    var url = Uri.parse('${ApiService.baseUrl}/admin/teachers');
+    final queryParams = <String, String>{};
+    if (status != null && status.isNotEmpty) {
+      queryParams['status'] = status;
+    }
+    if (search != null && search.isNotEmpty) {
+      queryParams['search'] = search;
+    }
+    if (queryParams.isNotEmpty) {
+      url = url.replace(queryParameters: queryParams);
+    }
+
+    final response = await http.get(url, headers: _getHeaders());
+    final data = await _handleResponse(response);
+    if (data is List) {
+      return List<Map<String, dynamic>>.from(data);
+    }
+    return [];
+  }
+
+  Future<List<Map<String, dynamic>>> getPendingTeachers() async {
+    final response = await http.get(
+      Uri.parse('${ApiService.baseUrl}/admin/teachers/pending'),
+      headers: _getHeaders(),
+    );
+    final data = await _handleResponse(response);
+    if (data is List) {
+      return List<Map<String, dynamic>>.from(data);
+    }
+    return [];
+  }
+
+  Future<Map<String, dynamic>> getTeacherDetails(String teacherId) async {
+    final response = await http.get(
+      Uri.parse('${ApiService.baseUrl}/admin/teachers/$teacherId'),
+      headers: _getHeaders(),
+    );
+    return await _handleResponse(response) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> acceptTeacher(String teacherId) async {
+    final response = await http.patch(
+      Uri.parse('${ApiService.baseUrl}/admin/teachers/$teacherId/accept'),
+      headers: _getHeaders(),
+    );
+    return await _handleResponse(response) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> rejectTeacher(
+    String teacherId, {
+    String? rejectionReason,
+  }) async {
+    final response = await http.patch(
+      Uri.parse('${ApiService.baseUrl}/admin/teachers/$teacherId/reject'),
+      headers: _getHeaders(),
+      body: json.encode({
+        if (rejectionReason != null && rejectionReason.trim().isNotEmpty)
+          'rejectionReason': rejectionReason.trim(),
+      }),
+    );
+    return await _handleResponse(response) as Map<String, dynamic>;
+  }
+
+  Future<List<Map<String, dynamic>>> getAdminLessons({
+    String? search,
+    String? teacherId,
+    String? status,
+    String? dateFrom,
+    String? dateTo,
+  }) async {
+    var url = Uri.parse('${ApiService.baseUrl}/admin/lessons');
+    final queryParams = <String, String>{};
+    if (search != null && search.isNotEmpty) queryParams['search'] = search;
+    if (teacherId != null && teacherId.isNotEmpty) {
+      queryParams['teacherId'] = teacherId;
+    }
+    if (status != null && status.isNotEmpty) queryParams['status'] = status;
+    if (dateFrom != null && dateFrom.isNotEmpty) queryParams['dateFrom'] = dateFrom;
+    if (dateTo != null && dateTo.isNotEmpty) queryParams['dateTo'] = dateTo;
+    if (queryParams.isNotEmpty) {
+      url = url.replace(queryParameters: queryParams);
+    }
+
+    final response = await http.get(url, headers: _getHeaders());
+    final data = await _handleResponse(response);
+    if (data is List) {
+      return List<Map<String, dynamic>>.from(data);
+    }
+    return [];
+  }
+
+  Future<Map<String, dynamic>> moderateLesson(
+    String lessonId, {
+    required String status,
+    String? moderationNote,
+  }) async {
+    final response = await http.patch(
+      Uri.parse('${ApiService.baseUrl}/admin/lessons/$lessonId/moderation'),
+      headers: _getHeaders(),
+      body: json.encode({
+        'status': status,
+        if (moderationNote != null && moderationNote.trim().isNotEmpty)
+          'moderationNote': moderationNote.trim(),
+      }),
+    );
+    return await _handleResponse(response) as Map<String, dynamic>;
+  }
+
+  String resolveFileUrl(String? pathOrUrl) {
+    if (pathOrUrl == null || pathOrUrl.trim().isEmpty) return '';
+    final value = pathOrUrl.trim();
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return value;
+    }
+    final base = Uri.parse(ApiService.baseUrl);
+    final origin = '${base.scheme}://${base.host}${base.hasPort ? ':${base.port}' : ''}';
+    if (value.startsWith('/')) {
+      return '$origin$value';
+    }
+    return '$origin/$value';
+  }
 }

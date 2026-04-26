@@ -2,15 +2,15 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
-} from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { Progress, ProgressDocument } from '../quiz/schemas/progress.schema';
+} from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model, Types } from "mongoose";
+import { Progress, ProgressDocument } from "../quiz/schemas/progress.schema";
 import {
   ClassMembership,
   ClassMembershipDocument,
-} from '../classes/schemas/class-membership.schema';
-import { ClassesService } from '../classes/classes.service';
+} from "../classes/schemas/class-membership.schema";
+import { ClassesService } from "../classes/classes.service";
 
 export interface KidProgressStats {
   kidId: string;
@@ -52,14 +52,14 @@ export class AnalyticsService {
     );
     if (!isOwner) {
       throw new ForbiddenException(
-        'You can only view analytics for your own classes',
+        "You can only view analytics for your own classes",
       );
     }
 
     // Verify class exists
     const classDoc = await this.classesService.findOneById(classId);
     if (!classDoc) {
-      throw new NotFoundException('Class not found');
+      throw new NotFoundException("Class not found");
     }
 
     // Get all active members of the class
@@ -68,7 +68,7 @@ export class AnalyticsService {
         classId: new Types.ObjectId(classId),
         isActive: true,
       })
-      .populate('kidId', 'firstName lastName')
+      .populate("kidId", "firstName lastName")
       .exec();
 
     if (memberships.length === 0) {
@@ -103,11 +103,11 @@ export class AnalyticsService {
       // Group by kidId to calculate statistics
       {
         $group: {
-          _id: '$kidId',
-          avgScore: { $avg: '$bestScore' },
-          maxLastActivity: { $max: '$lastAttemptAt' },
+          _id: "$kidId",
+          avgScore: { $avg: "$bestScore" },
+          maxLastActivity: { $max: "$lastAttemptAt" },
           completedCount: {
-            $sum: { $cond: ['$isCompleted', 1, 0] },
+            $sum: { $cond: ["$isCompleted", 1, 0] },
           },
           totalLessons: { $sum: 1 },
         },
@@ -115,41 +115,41 @@ export class AnalyticsService {
       // Lookup kid information
       {
         $lookup: {
-          from: 'kids',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'kid',
+          from: "kids",
+          localField: "_id",
+          foreignField: "_id",
+          as: "kid",
         },
       },
       {
         $unwind: {
-          path: '$kid',
+          path: "$kid",
           preserveNullAndEmptyArrays: true,
         },
       },
       // Project final structure
       {
         $project: {
-          kidId: { $toString: '$_id' },
+          kidId: { $toString: "$_id" },
           kidName: {
             $concat: [
-              { $ifNull: ['$kid.firstName', ''] },
-              ' ',
-              { $ifNull: ['$kid.lastName', ''] },
+              { $ifNull: ["$kid.firstName", ""] },
+              " ",
+              { $ifNull: ["$kid.lastName", ""] },
             ],
           },
-          avgScore: { $round: [{ $ifNull: ['$avgScore', 0] }, 2] },
-          lastActivity: '$maxLastActivity',
-          completedLessons: '$completedCount',
-          totalLessons: '$totalLessons',
+          avgScore: { $round: [{ $ifNull: ["$avgScore", 0] }, 2] },
+          lastActivity: "$maxLastActivity",
+          completedLessons: "$completedCount",
+          totalLessons: "$totalLessons",
           completionRate: {
             $cond: [
-              { $gt: ['$totalLessons', 0] },
+              { $gt: ["$totalLessons", 0] },
               {
                 $round: [
                   {
                     $multiply: [
-                      { $divide: ['$completedCount', '$totalLessons'] },
+                      { $divide: ["$completedCount", "$totalLessons"] },
                       100,
                     ],
                   },

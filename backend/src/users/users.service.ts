@@ -1,8 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User, UserDocument, UserRole } from './schemas/user.schema';
-import * as bcrypt from 'bcrypt';
+import { Injectable } from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import {
+  TeacherApprovalStatus,
+  User,
+  UserDocument,
+  UserRole,
+} from "./schemas/user.schema";
+import * as bcrypt from "bcrypt";
 
 @Injectable()
 export class UsersService {
@@ -13,7 +18,7 @@ export class UsersService {
   }
 
   private escapeRegex(value: string): string {
-    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
   async create(
@@ -22,6 +27,12 @@ export class UsersService {
     firstName: string,
     lastName: string,
     role: UserRole = UserRole.PARENT,
+    options?: {
+      cvUrl?: string;
+      approvalStatus?: TeacherApprovalStatus;
+      rejectionReason?: string;
+      submittedAt?: Date;
+    },
   ): Promise<UserDocument> {
     const hashedPassword = await bcrypt.hash(password, 10);
     const normalizedEmail = this.normalizeEmail(email);
@@ -31,6 +42,10 @@ export class UsersService {
       firstName,
       lastName,
       role,
+      cvUrl: options?.cvUrl,
+      approvalStatus: options?.approvalStatus,
+      rejectionReason: options?.rejectionReason,
+      submittedAt: options?.submittedAt,
     });
     return user.save();
   }
@@ -63,7 +78,9 @@ export class UsersService {
   async findByEmail(email: string): Promise<UserDocument | null> {
     const normalizedEmail = this.normalizeEmail(email);
     const escaped = this.escapeRegex(normalizedEmail);
-    return this.userModel.findOne({ email: new RegExp(`^${escaped}$`, 'i') }).exec();
+    return this.userModel
+      .findOne({ email: new RegExp(`^${escaped}$`, "i") })
+      .exec();
   }
 
   async findById(id: string): Promise<UserDocument | null> {
@@ -72,15 +89,12 @@ export class UsersService {
 
   /** Détecte un hash bcrypt (les anciens comptes peuvent avoir un mot de passe en clair). */
   isBcryptHash(stored: string | undefined): boolean {
-    if (typeof stored !== 'string' || stored.length < 7) return false;
+    if (typeof stored !== "string" || stored.length < 7) return false;
     // Ex. $2b$10$... ou $2a$12$...
     return /^\$2[aby]\$\d{2}\$/.test(stored);
   }
 
-  async validatePassword(
-    plain: string,
-    stored: string,
-  ): Promise<boolean> {
+  async validatePassword(plain: string, stored: string): Promise<boolean> {
     if (this.isBcryptHash(stored)) {
       return bcrypt.compare(plain, stored);
     }
@@ -93,8 +107,6 @@ export class UsersService {
     plainPassword: string,
   ): Promise<void> {
     const hashed = await bcrypt.hash(plainPassword, 10);
-    await this.userModel
-      .findByIdAndUpdate(userId, { password: hashed })
-      .exec();
+    await this.userModel.findByIdAndUpdate(userId, { password: hashed }).exec();
   }
 }

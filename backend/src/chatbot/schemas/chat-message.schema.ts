@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
 
 export type ChatMessageDocument = ChatMessage &
   Document & {
@@ -8,14 +8,14 @@ export type ChatMessageDocument = ChatMessage &
   };
 
 export enum MessageRole {
-  USER = 'user',
-  ASSISTANT = 'assistant',
-  SYSTEM = 'system',
+  USER = "user",
+  ASSISTANT = "assistant",
+  SYSTEM = "system",
 }
 
 @Schema({ timestamps: true })
 export class ChatMessage {
-  @Prop({ required: true, type: Types.ObjectId, ref: 'ChatSession' })
+  @Prop({ required: true, type: Types.ObjectId, ref: "ChatSession" })
   sessionId: Types.ObjectId;
 
   @Prop({ required: true, enum: MessageRole })

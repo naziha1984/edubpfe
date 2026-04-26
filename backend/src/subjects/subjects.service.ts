@@ -2,12 +2,12 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
-} from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Subject, SubjectDocument } from './schemas/subject.schema';
-import { CreateSubjectDto } from './dto/create-subject.dto';
-import { UpdateSubjectDto } from './dto/update-subject.dto';
+} from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import { Subject, SubjectDocument } from "./schemas/subject.schema";
+import { CreateSubjectDto } from "./dto/create-subject.dto";
+import { UpdateSubjectDto } from "./dto/update-subject.dto";
 
 @Injectable()
 export class SubjectsService {
@@ -29,7 +29,7 @@ export class SubjectsService {
       return await subject.save();
     } catch (error: any) {
       if (error.code === 11000) {
-        throw new ConflictException('Subject with this name already exists');
+        throw new ConflictException("Subject with this name already exists");
       }
       throw error;
     }
@@ -41,7 +41,7 @@ export class SubjectsService {
   ): Promise<SubjectDocument> {
     const subject = await this.findOne(id);
     if (!subject) {
-      throw new NotFoundException('Subject not found');
+      throw new NotFoundException("Subject not found");
     }
 
     try {
@@ -50,7 +50,7 @@ export class SubjectsService {
         .exec();
     } catch (error: any) {
       if (error.code === 11000) {
-        throw new ConflictException('Subject with this name already exists');
+        throw new ConflictException("Subject with this name already exists");
       }
       throw error;
     }
@@ -59,7 +59,7 @@ export class SubjectsService {
   async remove(id: string): Promise<void> {
     const subject = await this.findOne(id);
     if (!subject) {
-      throw new NotFoundException('Subject not found');
+      throw new NotFoundException("Subject not found");
     }
 
     await this.subjectModel.findByIdAndDelete(id).exec();

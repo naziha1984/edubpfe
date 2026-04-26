@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
 
 export type LiveSessionDocument = LiveSession &
   Document & {
@@ -8,18 +8,18 @@ export type LiveSessionDocument = LiveSession &
   };
 
 export enum LiveSessionStatus {
-  SCHEDULED = 'SCHEDULED',
-  LIVE = 'LIVE',
-  COMPLETED = 'COMPLETED',
-  CANCELLED = 'CANCELLED',
+  SCHEDULED = "SCHEDULED",
+  LIVE = "LIVE",
+  COMPLETED = "COMPLETED",
+  CANCELLED = "CANCELLED",
 }
 
 @Schema({ timestamps: true })
 export class LiveSession {
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Class' })
+  @Prop({ required: true, type: Types.ObjectId, ref: "Class" })
   classId: Types.ObjectId;
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
+  @Prop({ required: true, type: Types.ObjectId, ref: "User" })
   teacherId: Types.ObjectId;
 
   @Prop({ required: true })

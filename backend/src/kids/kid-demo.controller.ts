@@ -1,10 +1,10 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
-import { KidAuthGuard } from './guards/kid-auth.guard';
-import { GetKid } from './decorators/get-kid.decorator';
+import { Controller, Get, UseGuards } from "@nestjs/common";
+import { KidAuthGuard } from "./guards/kid-auth.guard";
+import { GetKid } from "./decorators/get-kid.decorator";
 
-@Controller('kid-demo')
+@Controller("kid-demo")
 export class KidDemoController {
-  @Get('me')
+  @Get("me")
   @UseGuards(KidAuthGuard)
   async getKidInfo(@GetKid() kid: any) {
     return {
@@ -16,11 +16,11 @@ export class KidDemoController {
     };
   }
 
-  @Get('protected')
+  @Get("protected")
   @UseGuards(KidAuthGuard)
   async protectedRoute(@GetKid() kid: any) {
     return {
-      message: 'This is a protected route for kids',
+      message: "This is a protected route for kids",
       kid: {
         id: kid.kidId,
         name: `${kid.firstName} ${kid.lastName}`,

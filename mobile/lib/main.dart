@@ -13,6 +13,9 @@ import 'providers/lessons_provider.dart';
 import 'providers/teacher_provider.dart';
 import 'providers/assignments_provider.dart';
 import 'providers/live_sessions_provider.dart';
+import 'providers/notifications_provider.dart';
+import 'providers/messages_provider.dart';
+import 'providers/student_tracking_provider.dart';
 import 'services/api_service.dart';
 import 'utils/app_router.dart';
 import 'components/loading.dart';
@@ -61,6 +64,15 @@ class EduBridgeApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (_) => LiveSessionsProvider(apiService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => NotificationsProvider(apiService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => MessagesProvider(apiService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => StudentTrackingProvider(apiService),
         ),
       ],
       child: Consumer<AppSettingsProvider>(

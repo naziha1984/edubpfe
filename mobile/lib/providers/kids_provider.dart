@@ -51,6 +51,7 @@ class KidsProvider with ChangeNotifier {
   Future<bool> addKid({
     required String firstName,
     required String lastName,
+    required int schoolLevel,
     String? dateOfBirth,
     String? grade,
     String? school,
@@ -62,6 +63,7 @@ class KidsProvider with ChangeNotifier {
       await _apiService.addKid(
         firstName: firstName,
         lastName: lastName,
+        schoolLevel: schoolLevel,
         dateOfBirth: dateOfBirth,
         grade: grade,
         school: school,

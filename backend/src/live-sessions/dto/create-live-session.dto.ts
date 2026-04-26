@@ -5,7 +5,7 @@ import {
   IsMongoId,
   IsDateString,
   IsUrl,
-} from 'class-validator';
+} from "class-validator";
 
 export class CreateLiveSessionDto {
   @IsMongoId()

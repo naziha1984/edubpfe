@@ -16,11 +16,12 @@ import 'class_progress_screen.dart';
 import 'teacher_assignments_screen.dart';
 import 'teacher_live_sessions_screen.dart';
 import 'package:flutter/services.dart';
+import 'teacher_student_tracking_screen.dart';
 
 /// Écran de détails d'une classe avec Tabs
 class ClassDetailsScreen extends StatefulWidget {
   final ClassModel classModel;
-  /// 0 = Students, 1 = Assignments, 2 = Live, 3 = Progress
+  /// 0 = Élèves, 1 = Devoirs, 2 = Live, 3 = Progression
   final int initialTabIndex;
 
   const ClassDetailsScreen({
@@ -63,7 +64,7 @@ class _ClassDetailsScreenState extends State<ClassDetailsScreen>
   }
 
   Future<void> _shareClassCode() async {
-    // TODO: Implement share functionality
+    // TODO : implémenter le partage
     await _copyClassCode();
   }
 
@@ -144,7 +145,7 @@ class _ClassDetailsScreenState extends State<ClassDetailsScreen>
         child: SafeArea(
           child: Column(
             children: [
-              // App Bar
+              // Barre d'application
               Padding(
                 padding: const EdgeInsets.all(EduBridgeTheme.spacingLG),
                 child: Row(
@@ -181,7 +182,7 @@ class _ClassDetailsScreenState extends State<ClassDetailsScreen>
                   ],
                 ),
               ),
-              // Class Code Section
+              // Section du code de classe
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: EduBridgeTheme.spacingLG,
@@ -231,7 +232,7 @@ class _ClassDetailsScreenState extends State<ClassDetailsScreen>
                 ),
               ),
               const SizedBox(height: EduBridgeTheme.spacingMD),
-              // Tabs
+              // Onglets
               TabBar(
                 controller: _tabController,
                 labelColor: EduBridgeColors.primary,
@@ -244,7 +245,7 @@ class _ClassDetailsScreenState extends State<ClassDetailsScreen>
                   Tab(text: 'Progress', icon: Icon(Icons.trending_up)),
                 ],
               ),
-              // Tab Content
+              // Contenu des onglets
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
@@ -293,7 +294,7 @@ class _ClassDetailsScreenState extends State<ClassDetailsScreen>
 
     return Column(
       children: [
-        // Add Student Button
+        // Bouton d'ajout d'élève
         Padding(
           padding: const EdgeInsets.all(EduBridgeTheme.spacingLG),
           child: SizedBox(
@@ -312,7 +313,7 @@ class _ClassDetailsScreenState extends State<ClassDetailsScreen>
             ),
           ),
         ),
-        // Students List
+        // Liste des élèves
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(
@@ -325,6 +326,17 @@ class _ClassDetailsScreenState extends State<ClassDetailsScreen>
                 padding: const EdgeInsets.only(bottom: EduBridgeTheme.spacingMD),
                 child: StudentCard(
                   member: member,
+                  onTrack: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => TeacherStudentTrackingScreen(
+                          kidId: member.kidId,
+                          kidName: member.kidName,
+                        ),
+                      ),
+                    );
+                  },
                   onRemove: () => _handleRemoveStudent(member.kidId),
                 ),
               );

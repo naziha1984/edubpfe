@@ -8,46 +8,109 @@ import '../services/admin_service.dart';
 class AdminProvider with ChangeNotifier {
   final AdminService _adminService;
   
-  // KPIs
+  // Indicateurs clés
   int _totalUsers = 0;
   int _totalSubjects = 0;
   int _totalLessons = 0;
   bool _isLoadingStats = false;
   String? _statsError;
 
-  // Users
+  // Utilisateurs
   List<UserModel> _users = [];
   bool _isLoadingUsers = false;
   String? _usersError;
   String _searchQuery = '';
   String? _roleFilter;
 
-  // Kids (liste admin)
+  // Enfants (liste admin)
   List<AdminKidModel> _kids = [];
   bool _isLoadingKids = false;
   String? _kidsError;
 
+  // Workflow de validation des enseignants
+  List<UserModel> _pendingTeachers = [];
+  bool _isLoadingPendingTeachers = false;
+  String? _pendingTeachersError;
+  UserModel? _teacherDetails;
+  bool _isLoadingTeacherDetails = false;
+  String? _teacherDetailsError;
+  bool _isSubmittingTeacherDecision = false;
+  String? _teacherDecisionError;
+
+  // Vue d'ensemble du tableau de bord admin
+  Map<String, dynamic>? _dashboardOverview;
+  bool _isLoadingDashboardOverview = false;
+  String? _dashboardOverviewError;
+
+  // Tableau de gestion des enseignants
+  List<UserModel> _teachers = [];
+  bool _isLoadingTeachers = false;
+  String? _teachersError;
+  String _teacherSearchQuery = '';
+  String? _teacherStatusFilter;
+
+  // Tableau de modération des leçons
+  List<Map<String, dynamic>> _adminLessons = [];
+  bool _isLoadingAdminLessons = false;
+  String? _adminLessonsError;
+  String _lessonSearchQuery = '';
+  String? _lessonStatusFilter;
+  bool _isSubmittingLessonModeration = false;
+  String? _lessonModerationError;
+
+  // Vue d'ensemble des notifications
+  Map<String, dynamic>? _notificationsOverview;
+  bool _isLoadingNotificationsOverview = false;
+  String? _notificationsOverviewError;
+
   AdminProvider(ApiService apiService)
       : _adminService = AdminService(apiService);
 
-  // Getters pour KPIs
+  // Getters pour les indicateurs clés
   int get totalUsers => _totalUsers;
   int get totalSubjects => _totalSubjects;
   int get totalLessons => _totalLessons;
   bool get isLoadingStats => _isLoadingStats;
   String? get statsError => _statsError;
 
-  // Getters pour Users
+  // Getters pour les utilisateurs
   List<UserModel> get users => _users;
   bool get isLoadingUsers => _isLoadingUsers;
   String? get usersError => _usersError;
   String get searchQuery => _searchQuery;
   String? get roleFilter => _roleFilter;
 
-  // Getters pour Kids
+  // Getters pour les enfants
   List<AdminKidModel> get kids => _kids;
   bool get isLoadingKids => _isLoadingKids;
   String? get kidsError => _kidsError;
+
+  List<UserModel> get pendingTeachers => _pendingTeachers;
+  bool get isLoadingPendingTeachers => _isLoadingPendingTeachers;
+  String? get pendingTeachersError => _pendingTeachersError;
+  UserModel? get teacherDetails => _teacherDetails;
+  bool get isLoadingTeacherDetails => _isLoadingTeacherDetails;
+  String? get teacherDetailsError => _teacherDetailsError;
+  bool get isSubmittingTeacherDecision => _isSubmittingTeacherDecision;
+  String? get teacherDecisionError => _teacherDecisionError;
+  Map<String, dynamic>? get dashboardOverview => _dashboardOverview;
+  bool get isLoadingDashboardOverview => _isLoadingDashboardOverview;
+  String? get dashboardOverviewError => _dashboardOverviewError;
+  List<UserModel> get teachers => _teachers;
+  bool get isLoadingTeachers => _isLoadingTeachers;
+  String? get teachersError => _teachersError;
+  String get teacherSearchQuery => _teacherSearchQuery;
+  String? get teacherStatusFilter => _teacherStatusFilter;
+  List<Map<String, dynamic>> get adminLessons => _adminLessons;
+  bool get isLoadingAdminLessons => _isLoadingAdminLessons;
+  String? get adminLessonsError => _adminLessonsError;
+  String get lessonSearchQuery => _lessonSearchQuery;
+  String? get lessonStatusFilter => _lessonStatusFilter;
+  bool get isSubmittingLessonModeration => _isSubmittingLessonModeration;
+  String? get lessonModerationError => _lessonModerationError;
+  Map<String, dynamic>? get notificationsOverview => _notificationsOverview;
+  bool get isLoadingNotificationsOverview => _isLoadingNotificationsOverview;
+  String? get notificationsOverviewError => _notificationsOverviewError;
 
   /// Users filtrés selon searchQuery et roleFilter
   List<UserModel> get filteredUsers {
@@ -138,7 +201,7 @@ class AdminProvider with ChangeNotifier {
   void setRoleFilter(String? role) {
     _roleFilter = role;
     notifyListeners();
-    // Recharger les users avec le nouveau filtre
+    // Recharger les utilisateurs avec le nouveau filtre
     loadUsers();
   }
 
@@ -166,6 +229,195 @@ class AdminProvider with ChangeNotifier {
       _kidsError = e.toString();
       _kids = [];
       _isLoadingKids = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadPendingTeachers() async {
+    _isLoadingPendingTeachers = true;
+    _pendingTeachersError = null;
+    notifyListeners();
+    try {
+      final data = await _adminService.getPendingTeachers();
+      _pendingTeachers = data.map((e) => UserModel.fromJson(e)).toList();
+      _isLoadingPendingTeachers = false;
+      notifyListeners();
+    } catch (e) {
+      _pendingTeachersError = e.toString();
+      _pendingTeachers = [];
+      _isLoadingPendingTeachers = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadTeacherDetails(String teacherId) async {
+    _isLoadingTeacherDetails = true;
+    _teacherDetailsError = null;
+    notifyListeners();
+    try {
+      final data = await _adminService.getTeacherDetails(teacherId);
+      _teacherDetails = UserModel.fromJson(data);
+      _isLoadingTeacherDetails = false;
+      notifyListeners();
+    } catch (e) {
+      _teacherDetailsError = e.toString();
+      _teacherDetails = null;
+      _isLoadingTeacherDetails = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> acceptTeacher(String teacherId) async {
+    _isSubmittingTeacherDecision = true;
+    _teacherDecisionError = null;
+    notifyListeners();
+    try {
+      await _adminService.acceptTeacher(teacherId);
+      _isSubmittingTeacherDecision = false;
+      await loadPendingTeachers();
+      await loadTeacherDetails(teacherId);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _teacherDecisionError = e.toString();
+      _isSubmittingTeacherDecision = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> rejectTeacher(String teacherId, {String? reason}) async {
+    _isSubmittingTeacherDecision = true;
+    _teacherDecisionError = null;
+    notifyListeners();
+    try {
+      await _adminService.rejectTeacher(teacherId, rejectionReason: reason);
+      _isSubmittingTeacherDecision = false;
+      await loadPendingTeachers();
+      await loadTeacherDetails(teacherId);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _teacherDecisionError = e.toString();
+      _isSubmittingTeacherDecision = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<void> loadDashboardOverview() async {
+    _isLoadingDashboardOverview = true;
+    _dashboardOverviewError = null;
+    notifyListeners();
+    try {
+      _dashboardOverview = await _adminService.getDashboardOverview();
+      _isLoadingDashboardOverview = false;
+      notifyListeners();
+    } catch (e) {
+      _dashboardOverviewError = e.toString();
+      _dashboardOverview = null;
+      _isLoadingDashboardOverview = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadTeachers() async {
+    _isLoadingTeachers = true;
+    _teachersError = null;
+    notifyListeners();
+    try {
+      final data = await _adminService.getTeachers(
+        status: _teacherStatusFilter,
+        search: _teacherSearchQuery.isEmpty ? null : _teacherSearchQuery,
+      );
+      _teachers = data.map((e) => UserModel.fromJson(e)).toList();
+      _isLoadingTeachers = false;
+      notifyListeners();
+    } catch (e) {
+      _teachersError = e.toString();
+      _teachers = [];
+      _isLoadingTeachers = false;
+      notifyListeners();
+    }
+  }
+
+  void setTeacherSearchQuery(String value) {
+    _teacherSearchQuery = value;
+    notifyListeners();
+  }
+
+  void setTeacherStatusFilter(String? value) {
+    _teacherStatusFilter = value;
+    notifyListeners();
+  }
+
+  Future<void> loadAdminLessons() async {
+    _isLoadingAdminLessons = true;
+    _adminLessonsError = null;
+    notifyListeners();
+    try {
+      _adminLessons = await _adminService.getAdminLessons(
+        search: _lessonSearchQuery.isEmpty ? null : _lessonSearchQuery,
+        status: _lessonStatusFilter,
+      );
+      _isLoadingAdminLessons = false;
+      notifyListeners();
+    } catch (e) {
+      _adminLessonsError = e.toString();
+      _adminLessons = [];
+      _isLoadingAdminLessons = false;
+      notifyListeners();
+    }
+  }
+
+  void setLessonSearchQuery(String value) {
+    _lessonSearchQuery = value;
+    notifyListeners();
+  }
+
+  void setLessonStatusFilter(String? value) {
+    _lessonStatusFilter = value;
+    notifyListeners();
+  }
+
+  Future<bool> moderateLesson(
+    String lessonId, {
+    required String status,
+    String? moderationNote,
+  }) async {
+    _isSubmittingLessonModeration = true;
+    _lessonModerationError = null;
+    notifyListeners();
+    try {
+      await _adminService.moderateLesson(
+        lessonId,
+        status: status,
+        moderationNote: moderationNote,
+      );
+      _isSubmittingLessonModeration = false;
+      await Future.wait([loadAdminLessons(), loadDashboardOverview()]);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _lessonModerationError = e.toString();
+      _isSubmittingLessonModeration = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<void> loadNotificationsOverview() async {
+    _isLoadingNotificationsOverview = true;
+    _notificationsOverviewError = null;
+    notifyListeners();
+    try {
+      _notificationsOverview = await _adminService.getNotificationsOverview();
+      _isLoadingNotificationsOverview = false;
+      notifyListeners();
+    } catch (e) {
+      _notificationsOverviewError = e.toString();
+      _notificationsOverview = null;
+      _isLoadingNotificationsOverview = false;
       notifyListeners();
     }
   }

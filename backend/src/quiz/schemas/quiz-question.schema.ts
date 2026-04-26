@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
 
 export type QuizQuestionDocument = QuizQuestion &
   Document & {
@@ -8,18 +8,18 @@ export type QuizQuestionDocument = QuizQuestion &
   };
 
 export enum QuizDifficulty {
-  EASY = 'easy',
-  MEDIUM = 'medium',
-  HARD = 'hard',
+  EASY = "easy",
+  MEDIUM = "medium",
+  HARD = "hard",
 }
 
 @Schema({ timestamps: true })
 export class QuizQuestion {
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Lesson' })
+  @Prop({ required: true, type: Types.ObjectId, ref: "Lesson" })
   lessonId: Types.ObjectId;
 
   /** Dénormalisé depuis la leçon : filtrage / cohérence avec la matière. */
-  @Prop({ type: Types.ObjectId, ref: 'Subject', index: true })
+  @Prop({ type: Types.ObjectId, ref: "Subject", index: true })
   subjectId?: Types.ObjectId;
 
   @Prop({

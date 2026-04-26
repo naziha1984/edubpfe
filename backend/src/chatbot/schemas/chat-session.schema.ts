@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
 
 export type ChatSessionDocument = ChatSession &
   Document & {
@@ -9,10 +9,10 @@ export type ChatSessionDocument = ChatSession &
 
 @Schema({ timestamps: true })
 export class ChatSession {
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Kid' })
+  @Prop({ required: true, type: Types.ObjectId, ref: "Kid" })
   kidId: Types.ObjectId;
 
-  @Prop({ default: 'en' })
+  @Prop({ default: "en" })
   detectedLanguage: string; // 'ar', 'fr', 'en'
 
   @Prop({ default: true })

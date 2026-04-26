@@ -1,20 +1,20 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
-import { ProgressService } from './progress.service';
-import { KidAuthGuard } from '../kids/guards/kid-auth.guard';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { GetUser } from '../auth/decorators/get-user.decorator';
-import { GetKid } from '../kids/decorators/get-kid.decorator';
-import { UserRole } from '../users/schemas/user.schema';
+import { Controller, Get, Param, UseGuards } from "@nestjs/common";
+import { ProgressService } from "./progress.service";
+import { KidAuthGuard } from "../kids/guards/kid-auth.guard";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { Roles } from "../auth/decorators/roles.decorator";
+import { GetUser } from "../auth/decorators/get-user.decorator";
+import { GetKid } from "../kids/decorators/get-kid.decorator";
+import { UserRole } from "../users/schemas/user.schema";
 
-@Controller('progress')
+@Controller("progress")
 export class ProgressController {
   constructor(private readonly progressService: ProgressService) {}
 
-  @Get('kids/:kidId')
+  @Get("kids/:kidId")
   @UseGuards(KidAuthGuard)
-  async getProgressByKid(@Param('kidId') kidId: string, @GetKid() kid: any) {
+  async getProgressByKid(@Param("kidId") kidId: string, @GetKid() kid: any) {
     const progress = await this.progressService.getProgressByKidId(
       kidId,
       kid.kidId,
@@ -35,11 +35,11 @@ export class ProgressController {
     }));
   }
 
-  @Get('parent/kids/:kidId')
+  @Get("parent/kids/:kidId")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.PARENT)
   async getProgressByParent(
-    @Param('kidId') kidId: string,
+    @Param("kidId") kidId: string,
     @GetUser() user: any,
   ) {
     const progress = await this.progressService.getProgressByKidId(
@@ -63,25 +63,19 @@ export class ProgressController {
     }));
   }
 
-  @Get('parent/kids/:kidId/summary')
+  @Get("parent/kids/:kidId/summary")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.PARENT)
-  async getParentSummary(
-    @Param('kidId') kidId: string,
-    @GetUser() user: any,
-  ) {
-    return this.progressService.getKidProgressSummaryForParent(
-      kidId,
-      user.id,
-    );
+  async getParentSummary(@Param("kidId") kidId: string, @GetUser() user: any) {
+    return this.progressService.getKidProgressSummaryForParent(kidId, user.id);
   }
 
-  @Get('teacher/classes/:classId/kids/:kidId/summary')
+  @Get("teacher/classes/:classId/kids/:kidId/summary")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.TEACHER)
   async getTeacherSummary(
-    @Param('classId') classId: string,
-    @Param('kidId') kidId: string,
+    @Param("classId") classId: string,
+    @Param("kidId") kidId: string,
     @GetUser() user: any,
   ) {
     return this.progressService.getKidProgressSummaryForTeacher(

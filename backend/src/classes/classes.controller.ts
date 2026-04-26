@@ -10,17 +10,17 @@ import {
   HttpStatus,
   NotFoundException,
   ForbiddenException,
-} from '@nestjs/common';
-import { ClassesService } from './classes.service';
-import { CreateClassDto } from './dto/create-class.dto';
-import { AddStudentDto } from './dto/add-student.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { GetUser } from '../auth/decorators/get-user.decorator';
-import { UserRole } from '../users/schemas/user.schema';
+} from "@nestjs/common";
+import { ClassesService } from "./classes.service";
+import { CreateClassDto } from "./dto/create-class.dto";
+import { AddStudentDto } from "./dto/add-student.dto";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { Roles } from "../auth/decorators/roles.decorator";
+import { GetUser } from "../auth/decorators/get-user.decorator";
+import { UserRole } from "../users/schemas/user.schema";
 
-@Controller('teacher/classes')
+@Controller("teacher/classes")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.TEACHER)
 export class ClassesController {
@@ -64,17 +64,17 @@ export class ClassesController {
     }));
   }
 
-  @Get(':classId')
-  async findOne(@Param('classId') classId: string, @GetUser() user: any) {
+  @Get(":classId")
+  async findOne(@Param("classId") classId: string, @GetUser() user: any) {
     const classDoc = await this.classesService.findOneById(classId);
     if (!classDoc) {
-      throw new NotFoundException('Class not found');
+      throw new NotFoundException("Class not found");
     }
 
     // Strict ownership check
     const isOwner = await this.classesService.checkOwnership(classId, user.id);
     if (!isOwner) {
-      throw new ForbiddenException('You can only view your own classes');
+      throw new ForbiddenException("You can only view your own classes");
     }
 
     // Get members
@@ -99,10 +99,10 @@ export class ClassesController {
     };
   }
 
-  @Post(':classId/students')
+  @Post(":classId/students")
   @HttpCode(HttpStatus.CREATED)
   async addStudent(
-    @Param('classId') classId: string,
+    @Param("classId") classId: string,
     @Body() addStudentDto: AddStudentDto,
     @GetUser() user: any,
   ) {
@@ -121,11 +121,11 @@ export class ClassesController {
     };
   }
 
-  @Delete(':classId/students/:kidId')
+  @Delete(":classId/students/:kidId")
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeStudent(
-    @Param('classId') classId: string,
-    @Param('kidId') kidId: string,
+    @Param("classId") classId: string,
+    @Param("kidId") kidId: string,
     @GetUser() user: any,
   ) {
     await this.classesService.removeStudentFromClass(classId, kidId, user.id);

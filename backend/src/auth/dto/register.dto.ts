@@ -5,7 +5,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsIn,
-} from 'class-validator';
+} from "class-validator";
 
 export class RegisterDto {
   @IsEmail()
@@ -25,9 +25,11 @@ export class RegisterDto {
   @IsNotEmpty()
   lastName: string;
 
-  /** Rôle à l'inscription : PARENT ou TEACHER (défaut: PARENT) */
+  /** Rôle à l'inscription : PARENT ou TEACHER (défaut: PARENT).
+   *  Si TEACHER, le fichier CV multipart (`cv`) est obligatoire.
+   */
   @IsOptional()
   @IsString()
-  @IsIn(['PARENT', 'TEACHER', 'parent', 'teacher'])
+  @IsIn(["PARENT", "TEACHER", "parent", "teacher"])
   role?: string;
 }

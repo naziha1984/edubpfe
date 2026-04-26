@@ -2,12 +2,12 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
-} from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { Progress, ProgressDocument } from './schemas/progress.schema';
-import { KidsService } from '../kids/kids.service';
-import { ClassesService } from '../classes/classes.service';
+} from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model, Types } from "mongoose";
+import { Progress, ProgressDocument } from "./schemas/progress.schema";
+import { KidsService } from "../kids/kids.service";
+import { ClassesService } from "../classes/classes.service";
 
 @Injectable()
 export class ProgressService {
@@ -26,27 +26,27 @@ export class ProgressService {
     if (requesterKidId) {
       // Kid accessing their own progress
       if (kidId !== requesterKidId) {
-        throw new ForbiddenException('You can only view your own progress');
+        throw new ForbiddenException("You can only view your own progress");
       }
     } else if (requesterParentId) {
       // Parent accessing their kid's progress
       const kid = await this.kidsService.findOneById(kidId);
       if (!kid) {
-        throw new NotFoundException('Kid not found');
+        throw new NotFoundException("Kid not found");
       }
       if (kid.parentId.toString() !== requesterParentId) {
         throw new ForbiddenException(
-          'You can only view progress for your own kids',
+          "You can only view progress for your own kids",
         );
       }
     } else {
-      throw new ForbiddenException('Authentication required');
+      throw new ForbiddenException("Authentication required");
     }
 
     return this.progressModel
       .find({ kidId: new Types.ObjectId(kidId) })
-      .populate('lessonId', 'title description')
-      .populate('subjectId', 'name code')
+      .populate("lessonId", "title description")
+      .populate("subjectId", "name code")
       .sort({ updatedAt: -1 })
       .exec();
   }
@@ -63,11 +63,11 @@ export class ProgressService {
   }> {
     const kid = await this.kidsService.findOneById(kidId);
     if (!kid) {
-      throw new NotFoundException('Kid not found');
+      throw new NotFoundException("Kid not found");
     }
     if (kid.parentId.toString() !== parentUserId) {
       throw new ForbiddenException(
-        'You can only view summary for your own kids',
+        "You can only view summary for your own kids",
       );
     }
     return this.buildProgressSummary(kidId);
@@ -83,17 +83,15 @@ export class ProgressService {
       teacherUserId,
     );
     if (!isOwner) {
-      throw new ForbiddenException('You do not teach this class');
+      throw new ForbiddenException("You do not teach this class");
     }
     const members = await this.classesService.getClassMembers(
       classId,
       teacherUserId,
     );
-    const allowed = members.some(
-      (m) => m.kidId.toString() === kidId,
-    );
+    const allowed = members.some((m) => m.kidId.toString() === kidId);
     if (!allowed) {
-      throw new ForbiddenException('This student is not in the class');
+      throw new ForbiddenException("This student is not in the class");
     }
     return this.buildProgressSummary(kidId);
   }
@@ -105,7 +103,7 @@ export class ProgressService {
 
     const lessonsCompleted = list.filter((p) => p.isCompleted).length;
     const withScore = list.filter(
-      (p) => typeof p.bestScore === 'number' && p.bestScore > 0,
+      (p) => typeof p.bestScore === "number" && p.bestScore > 0,
     );
     const avg =
       withScore.length > 0

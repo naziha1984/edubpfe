@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:typed_data';
 import 'package:provider/provider.dart';
 import '../components/loading.dart';
+import '../components/cv_upload_field.dart';
 import '../providers/auth_provider.dart';
 import '../utils/error_handler.dart';
 import '../ui/transitions/page_transitions.dart';
@@ -29,6 +32,9 @@ class _RegisterPageV2State extends State<RegisterPageV2>
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   String _selectedRole = 'PARENT';
+  Uint8List? _cvBytes;
+  String? _cvFileName;
+  String? _cvError;
 
   // Couleurs « arc-en-ciel doux » — complètent le design system
   static const Color _sunshine = Color(0xFFFFD166);
@@ -61,8 +67,16 @@ class _RegisterPageV2State extends State<RegisterPageV2>
 
   Future<void> _handleRegister() async {
     if (_formKey.currentState!.validate()) {
+      if (_selectedRole == 'TEACHER' && (_cvBytes == null || _cvFileName == null)) {
+        setState(() {
+          _cvError = 'Le CV est obligatoire pour un enseignant';
+        });
+        return;
+      }
+
       setState(() {
         _isLoading = true;
+        _cvError = null;
       });
 
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -74,6 +88,8 @@ class _RegisterPageV2State extends State<RegisterPageV2>
           firstName: _firstNameController.text.trim(),
           lastName: _lastNameController.text.trim(),
           role: _selectedRole,
+          cvBytes: _cvBytes,
+          cvFileName: _cvFileName,
         ),
       );
 
@@ -82,7 +98,14 @@ class _RegisterPageV2State extends State<RegisterPageV2>
           _isLoading = false;
         });
         if (success == true) {
-          Toast.success(context, 'Inscription réussie !');
+          if (_selectedRole == 'TEACHER') {
+            Toast.success(
+              context,
+              'Inscription envoyée. CV téléversé, en attente de validation admin.',
+            );
+          } else {
+            Toast.success(context, 'Inscription réussie !');
+          }
           Navigator.pushReplacement(
             context,
             PageTransitions.fadeSlideRoute(
@@ -92,6 +115,47 @@ class _RegisterPageV2State extends State<RegisterPageV2>
         }
       }
     }
+  }
+
+  Future<void> _pickCvFile() async {
+    setState(() {
+      _cvError = null;
+    });
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      withData: true,
+      allowedExtensions: const ['pdf', 'doc', 'docx'],
+    );
+    if (picked == null || picked.files.isEmpty) {
+      return;
+    }
+    final file = picked.files.first;
+    final bytes = file.bytes;
+    if (bytes == null || bytes.isEmpty) {
+      setState(() {
+        _cvError = 'Impossible de lire le fichier sélectionné';
+      });
+      return;
+    }
+    const maxBytes = 8 * 1024 * 1024;
+    if (bytes.length > maxBytes) {
+      setState(() {
+        _cvError = 'Le CV dépasse 8 MB';
+      });
+      return;
+    }
+    setState(() {
+      _cvBytes = bytes;
+      _cvFileName = file.name;
+      _cvError = null;
+    });
+  }
+
+  void _goToLogin() {
+    Navigator.of(context).pushAndRemoveUntil(
+      PageTransitions.fadeSlideRoute(const LoginPageV2()),
+      (route) => false,
+    );
   }
 
   InputDecoration _inputDecoration({
@@ -169,7 +233,12 @@ class _RegisterPageV2State extends State<RegisterPageV2>
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => setState(() => _selectedRole = role),
+          onTap: () => setState(() {
+            _selectedRole = role;
+            if (role != 'TEACHER') {
+              _cvError = null;
+            }
+          }),
           borderRadius: BorderRadius.circular(22),
           child: Ink(
             decoration: BoxDecoration(
@@ -481,6 +550,21 @@ class _RegisterPageV2State extends State<RegisterPageV2>
                                   ),
                                 ],
                               ),
+                              if (_selectedRole == 'TEACHER') ...[
+                                const SizedBox(height: 14),
+                                CvUploadField(
+                                  fileName: _cvFileName,
+                                  errorText: _cvError,
+                                  onPick: _pickCvFile,
+                                  onClear: () {
+                                    setState(() {
+                                      _cvBytes = null;
+                                      _cvFileName = null;
+                                      _cvError = null;
+                                    });
+                                  },
+                                ),
+                              ],
                               const SizedBox(height: 22),
                               TextFormField(
                                 controller: _emailController,
@@ -612,31 +696,35 @@ class _RegisterPageV2State extends State<RegisterPageV2>
                                 alignment: WrapAlignment.center,
                                 crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
-                                  Text(
-                                    'Déjà un compte ? ',
-                                    style: EduBridgeTypography.bodyMedium
-                                        .copyWith(
-                                      color: EduBridgeColors.textSecondary,
-                                    ),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pushReplacement(
-                                        context,
-                                        PageTransitions.fadeSlideRoute(
-                                          const LoginPageV2(),
+                                  InkWell(
+                                    borderRadius: BorderRadius.circular(14),
+                                    onTap: _goToLogin,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 4,
+                                      ),
+                                      child: RichText(
+                                        textAlign: TextAlign.center,
+                                        text: TextSpan(
+                                          style: EduBridgeTypography.bodyMedium
+                                              .copyWith(
+                                            color: EduBridgeColors.textSecondary,
+                                          ),
+                                          children: [
+                                            const TextSpan(text: 'Déjà un compte ? '),
+                                            TextSpan(
+                                              text: 'Se connecter',
+                                              style: EduBridgeTypography.bodyMedium
+                                                  .copyWith(
+                                                color: EduBridgeColors.secondaryDark,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      );
-                                    },
-                                    style: TextButton.styleFrom(
-                                      foregroundColor:
-                                          EduBridgeColors.secondaryDark,
-                                      textStyle: EduBridgeTypography.bodyMedium
-                                          .copyWith(
-                                        fontWeight: FontWeight.w800,
                                       ),
                                     ),
-                                    child: const Text('Se connecter'),
                                   ),
                                 ],
                               ),

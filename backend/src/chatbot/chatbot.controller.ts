@@ -7,18 +7,18 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
-} from '@nestjs/common';
-import { ChatbotService } from './chatbot.service';
-import { KidAuthGuard } from '../kids/guards/kid-auth.guard';
-import { GetKid } from '../kids/decorators/get-kid.decorator';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { SendMessageDto } from './dto/send-message.dto';
+} from "@nestjs/common";
+import { ChatbotService } from "./chatbot.service";
+import { KidAuthGuard } from "../kids/guards/kid-auth.guard";
+import { GetKid } from "../kids/decorators/get-kid.decorator";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { SendMessageDto } from "./dto/send-message.dto";
 
-@Controller('chatbot')
+@Controller("chatbot")
 export class ChatbotController {
   constructor(private readonly chatbotService: ChatbotService) {}
 
-  @Post('message')
+  @Post("message")
   @UseGuards(KidAuthGuard)
   @HttpCode(HttpStatus.OK)
   async sendMessage(
@@ -38,7 +38,7 @@ export class ChatbotController {
     };
   }
 
-  @Post('message-user')
+  @Post("message-user")
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async sendMessageForUser(@Body() sendMessageDto: SendMessageDto) {
@@ -53,9 +53,9 @@ export class ChatbotController {
     };
   }
 
-  @Get('history/:sessionId')
+  @Get("history/:sessionId")
   @UseGuards(KidAuthGuard)
-  async getHistory(@Param('sessionId') sessionId: string, @GetKid() kid: any) {
+  async getHistory(@Param("sessionId") sessionId: string, @GetKid() kid: any) {
     // 验证会话属于该 kid（通过 ChatbotService 内部验证）
     const history = await this.chatbotService.getHistory(sessionId, kid.kidId);
 
@@ -70,7 +70,7 @@ export class ChatbotController {
     }));
   }
 
-  @Get('sessions')
+  @Get("sessions")
   @UseGuards(KidAuthGuard)
   async getSessions(@GetKid() kid: any) {
     const sessions = await this.chatbotService.getSessions(kid.kidId);

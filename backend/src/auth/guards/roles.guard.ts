@@ -3,10 +3,10 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
-} from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { UserRole } from '../../users/schemas/user.schema';
-import { ROLES_KEY } from '../decorators/roles.decorator';
+} from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { UserRole } from "../../users/schemas/user.schema";
+import { ROLES_KEY } from "../decorators/roles.decorator";
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -24,11 +24,11 @@ export class RolesGuard implements CanActivate {
 
     const { user } = context.switchToHttp().getRequest();
     const userRole =
-      typeof user?.role === 'string' ? user.role.toUpperCase() : user?.role;
+      typeof user?.role === "string" ? user.role.toUpperCase() : user?.role;
     const hasRole = requiredRoles.some((role) => userRole === role);
 
     if (!hasRole) {
-      throw new ForbiddenException('Admin access required');
+      throw new ForbiddenException("Admin access required");
     }
 
     return true;

@@ -8,25 +8,25 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
-} from '@nestjs/common';
-import { LiveSessionsService } from './live-sessions.service';
-import { CreateLiveSessionDto } from './dto/create-live-session.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { GetUser } from '../auth/decorators/get-user.decorator';
-import { UserRole } from '../users/schemas/user.schema';
+} from "@nestjs/common";
+import { LiveSessionsService } from "./live-sessions.service";
+import { CreateLiveSessionDto } from "./dto/create-live-session.dto";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { Roles } from "../auth/decorators/roles.decorator";
+import { GetUser } from "../auth/decorators/get-user.decorator";
+import { UserRole } from "../users/schemas/user.schema";
 
-@Controller('teacher/classes')
+@Controller("teacher/classes")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.TEACHER)
 export class LiveSessionsController {
   constructor(private readonly liveSessionsService: LiveSessionsService) {}
 
-  @Post(':classId/live-sessions')
+  @Post(":classId/live-sessions")
   @HttpCode(HttpStatus.CREATED)
   async createLiveSession(
-    @Param('classId') classId: string,
+    @Param("classId") classId: string,
     @Body() createLiveSessionDto: CreateLiveSessionDto,
     @GetUser() user: any,
   ) {
@@ -53,9 +53,9 @@ export class LiveSessionsController {
     };
   }
 
-  @Get(':classId/live-sessions')
+  @Get(":classId/live-sessions")
   async getLiveSessionsByClass(
-    @Param('classId') classId: string,
+    @Param("classId") classId: string,
     @GetUser() user: any,
   ) {
     const liveSessions = await this.liveSessionsService.getLiveSessionsByClass(
@@ -78,11 +78,11 @@ export class LiveSessionsController {
     }));
   }
 
-  @Patch(':classId/live-sessions/:sessionId/go-live')
+  @Patch(":classId/live-sessions/:sessionId/go-live")
   @HttpCode(HttpStatus.OK)
   async goLive(
-    @Param('classId') classId: string,
-    @Param('sessionId') sessionId: string,
+    @Param("classId") classId: string,
+    @Param("sessionId") sessionId: string,
     @GetUser() user: any,
   ) {
     const session = await this.liveSessionsService.markSessionLive(

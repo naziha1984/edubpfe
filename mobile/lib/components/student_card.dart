@@ -9,11 +9,13 @@ import '../ui/components/glass_card.dart';
 class StudentCard extends StatelessWidget {
   final ClassMemberModel member;
   final VoidCallback? onRemove;
+  final VoidCallback? onTrack;
 
   const StudentCard({
     super.key,
     required this.member,
     this.onRemove,
+    this.onTrack,
   });
 
   @override
@@ -67,6 +69,13 @@ class StudentCard extends StatelessWidget {
               ],
             ),
           ),
+          if (onTrack != null)
+            IconButton(
+              tooltip: 'Notes & progrès',
+              icon: const Icon(Icons.sticky_note_2_outlined),
+              onPressed: onTrack,
+              color: EduBridgeColors.primary,
+            ),
           // Remove button
           if (onRemove != null)
             IconButton(

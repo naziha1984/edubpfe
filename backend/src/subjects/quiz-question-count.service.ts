@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Injectable } from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model, Types } from "mongoose";
 import {
   QuizQuestion,
   QuizQuestionDocument,
-} from '../quiz/schemas/quiz-question.schema';
+} from "../quiz/schemas/quiz-question.schema";
 
 @Injectable()
 export class QuizQuestionCountService {
@@ -19,10 +19,10 @@ export class QuizQuestionCountService {
     if (lessonIds.length === 0) return map;
     const oids = lessonIds.map((id) => new Types.ObjectId(id));
     const agg = await this.quizQuestionModel
-      .aggregate<{ _id: Types.ObjectId; count: number }>([
-        { $match: { lessonId: { $in: oids }, isActive: true } },
-        { $group: { _id: '$lessonId', count: { $sum: 1 } } },
-      ])
+      .aggregate<{
+        _id: Types.ObjectId;
+        count: number;
+      }>([{ $match: { lessonId: { $in: oids }, isActive: true } }, { $group: { _id: "$lessonId", count: { $sum: 1 } } }])
       .exec();
     for (const row of agg) {
       map.set(row._id.toString(), row.count);

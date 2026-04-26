@@ -5,6 +5,10 @@ class UserModel {
   final String lastName;
   final String role; // 'PARENT', 'TEACHER', 'ADMIN'
   final bool isActive;
+  final String? cvUrl;
+  final String? approvalStatus;
+  final String? rejectionReason;
+  final DateTime? submittedAt;
 
   UserModel({
     required this.id,
@@ -13,6 +17,10 @@ class UserModel {
     required this.lastName,
     required this.role,
     this.isActive = true,
+    this.cvUrl,
+    this.approvalStatus,
+    this.rejectionReason,
+    this.submittedAt,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -50,6 +58,12 @@ class UserModel {
       lastName: json['lastName'] ?? '',
       role: parseRole(json['role']),
       isActive: json['isActive'] ?? true,
+      cvUrl: json['cvUrl']?.toString(),
+      approvalStatus: json['approvalStatus']?.toString(),
+      rejectionReason: json['rejectionReason']?.toString(),
+      submittedAt: json['submittedAt'] == null
+          ? null
+          : DateTime.tryParse(json['submittedAt'].toString()),
     );
   }
 
@@ -61,6 +75,10 @@ class UserModel {
       'lastName': lastName,
       'role': role,
       'isActive': isActive,
+      'cvUrl': cvUrl,
+      'approvalStatus': approvalStatus,
+      'rejectionReason': rejectionReason,
+      'submittedAt': submittedAt?.toIso8601String(),
     };
   }
 
